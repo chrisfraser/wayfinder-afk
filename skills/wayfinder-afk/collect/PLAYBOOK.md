@@ -17,7 +17,7 @@ A group is a claim that these calls stand or fall together. Make it only when tr
 
 Six to eight groups is a healthy shape for thirty calls. Two is hiding something; twenty is not grouping.
 
-Offer **split this group** on every group. If they take it, ask the members individually, in the same round if there are four or fewer.
+Offer **split this group** on every group. If they take it, ask the members individually, in the same round if there are four or fewer; more than four and they queue behind the groups still to come, four per round, until every member has been asked. Splitting adds rounds — it never converts the leftovers into prose.
 
 A **decline** is work, not a note: name what was built on the call, reverse it or file the ticket that does, record the reversal under `## Decisions so far` (it is itself a decision), and re-derive the stage-2 questions that rested on it *before* asking them.
 

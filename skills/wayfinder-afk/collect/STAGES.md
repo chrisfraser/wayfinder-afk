@@ -38,7 +38,7 @@ These come first because they are the premises everything else stands on: a decl
 
 **Group** calls that share a premise, a subsystem, or a fate — where approving them together is coherent and rejecting one would undermine the others. **Split** anything that could sensibly go the other way on its own. Always individual, never grouped: a call that **amends a standing constraint**, a call that is **irreversible or expensive to unwind**, and anything the run flagged **medium confidence**.
 
-Present each group as its own approve/decline (grouping rules and the card format in [PLAYBOOK.md](PLAYBOOK.md) and [TEMPLATES.md](TEMPLATES.md)). Offer *split this group* as a third option — a group is the agent's guess at coherence, and they may not agree with it. Ask at most four groups per round.
+Present each group as its own approve/decline (grouping rules and the card format in [PLAYBOOK.md](PLAYBOOK.md) and [TEMPLATES.md](TEMPLATES.md)). Offer *split this group* as a third option — a group is the agent's guess at coherence, and they may not agree with it. Ask at most four groups per round — and keep issuing rounds until the queue is empty. Four is a batch size, not a budget, and the last batch is a picker like every one before it.
 
 Apply on the spot. A declined call is **reversed now**, and every stage-2 question that rested on it is re-derived before it is asked.
 
@@ -72,9 +72,10 @@ Most of it is already banked. Finish the map body, close what is fully answered,
 
 1. **Never guess.** Unread is a legitimate outcome, re-asked plainly next round. A fabricated answer is not.
 2. **Never dump.** One decision group, one question, or one probe at a time. The session is a conversation.
-3. **Their words outrank the recommendation.** Answered against the run's advice? Apply it and drop the argument.
-4. **Bank at every boundary** — unless `--dry-run`, which never writes anything anywhere. A session that dies loses only the questions not yet asked.
-5. **Prose beats shorthand.** `B, but only above API 30` is B *plus a constraint*, and the constraint is the valuable half.
-6. **Authorship is not a signal** — the agent posts under the same token as the human. Every comment carries `<!-- wayfinder:agent -->`.
-7. **Close only what they answered.** Grilling tickets are HITL; their answer is the only thing that closes one.
-8. **Deferred is not dropped**, and **only the lead writes the map body**. Re-running collects only what is new.
+3. **Every choice goes through the picker — including the last one.** Groups, questions, probe modes: each is an `AskUserQuestion`, batched at four per round until the queue is empty. Nothing the human is meant to decide is left as a paragraph they have to answer by hand. Unclicked is unanswered, and a tail of calls applied because nobody objected is not a ratification.
+4. **Their words outrank the recommendation.** Answered against the run's advice? Apply it and drop the argument.
+5. **Bank at every boundary** — unless `--dry-run`, which never writes anything anywhere. A session that dies loses only the questions not yet asked.
+6. **Prose beats shorthand.** `B, but only above API 30` is B *plus a constraint*, and the constraint is the valuable half.
+7. **Authorship is not a signal** — the agent posts under the same token as the human. Every comment carries `<!-- wayfinder:agent -->`.
+8. **Close only what they answered.** Grilling tickets are HITL; their answer is the only thing that closes one.
+9. **Deferred is not dropped**, and **only the lead writes the map body**. Re-running collects only what is new.

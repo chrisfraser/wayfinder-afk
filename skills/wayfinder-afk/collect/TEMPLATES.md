@@ -59,6 +59,10 @@ Then `AskUserQuestion` — one question per group, up to four groups per round:
 
 Drop the recommendation marker when the group contains anything medium-confidence. A call that amends a standing constraint is **never** in a group — ask it alone, with the constraint's current text quoted.
 
+**Four is a batch size, not a budget.** Keep issuing rounds of up to four until the queue is empty — `m` groups take `ceil(m / 4)` rounds, and the last round is as much a picker as the first. A split works the same way: its members queue up and go out four at a time.
+
+**Never present an approval as prose.** Every group is decided in the picker — no listing the remainder and asking them to reply in text, no "the rest are straightforward, confirm and I'll apply them", no rolling leftovers into the stage-1 summary. The tail is where this fails: by the last round the answers feel obvious and the pull is to narrate them. A call the human didn't click is **unratified**, and applying it because nobody objected is the same error as answering a grilling question for them.
+
 ## Stage 2 — a question
 
 One per turn. The recommendation is visible but never pre-selected.
