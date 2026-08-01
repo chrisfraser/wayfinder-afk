@@ -1,0 +1,5 @@
+interface:
+  display_name: "Wayfinder AFK"
+  short_description: "Work a wayfinder map unattended, then collect the answers"
+policy:
+  allow_implicit_invocation: false
