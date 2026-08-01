@@ -64,7 +64,7 @@ Drop the recommendation marker when the group contains anything medium-confidenc
 One per turn. The recommendation is visible but never pre-selected.
 
 ```
-### <ticket name> · Q<n> of <total remaining>
+### <ticket name> · Q<n>
 
 **<the question, asked so a short answer works>**
 
@@ -75,6 +75,10 @@ Unblocks: #<iid>, #<iid>
 <Rests on: <the stage-1 call or earlier answer this assumes>, if it does>
 ```
 
+**`Q<n>` is the number that question carries on its own ticket's frontier — never a session counter.** It is the human's answer key: they reply `Q3 B` into that frontier comment, and a renumbered question lands the answer on the wrong row. Numbers repeat across tickets, so the **ticket name always rides beside it** — and it is the ticket's *title*, not a bare `#295`. The id travels inside the name's link; it never stands in for it.
+
+**Progress does not belong in this header.** It has exactly one writer — the after-answer block below — and a card that also counts will contradict it the moment a question is pruned.
+
 Then `AskUserQuestion` with the options as given, recommendation first. They can always answer in their own words instead — take the words over the letter.
 
 **After every answer**, before the next question:
@@ -83,7 +87,13 @@ Then `AskUserQuestion` with the options as given, recommendation first. They can
 → <what their answer settled>
 → Dropped: <question(s) now moot, and why>
 → Unlocked: <question(s) from later rounds now askable>
-<n> questions left.
+<n> answered · <n> left
+```
+
+The **left** count is recomputed from what is actually still open, *after* this answer's pruning — never `total − asked`. Questions get dropped and unlocked, so the pool moves in both directions and a subtraction goes stale on the first prune. When it did move, say so on the same line rather than letting the number jump silently:
+
+```
+17 answered · 41 left — 3 dropped by this answer
 ```
 
 ## Stage 2 — a question a probe can settle

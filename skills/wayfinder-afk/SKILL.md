@@ -53,6 +53,7 @@ Where the map, its child tickets, blocking and frontier queries physically live 
 6. **Build for the hardware, never drive it.** No installing, flashing, factory-resetting, and above all **no rebooting** — a reboot has already ended Wi-Fi ADB permanently on a radio and stranded it mid-run. Read-only checks on a device the session explicitly owns are the only exception, and in collect the human can lift the ban in the turn they lift it.
 7. **Assert on a positive signal, never on the absence of a negative one.** `BUILD SUCCESSFUL`, an exit code you actually captured, a parsed result file — never "grep found no errors". If your shell filters command output, bypass the filter for anything whose *failure* you must see (`rtk proxy <cmd>`, if that's the filter).
 8. **Deferred is not dropped**, and unread is a legitimate outcome. A fabricated answer is not.
+9. **Refer to a ticket by its name.** In everything the human reads, a ticket is its title, never a bare `#295` — a wall of ids is illegible. The id rides inside the name's link; it never stands in for it. Numbers the human answers *with* — `D1`, `Q3` — are the exception: those are keys, quoted exactly as the frontier posted them.
 
 ## What's in here
 
