@@ -6,6 +6,11 @@
 # CLOSED. Children are found by their "Part of: ... (#<map>)" body pointer;
 # blocking is read from the "## Blocked by" section of each body.
 #
+# Also reports UNLABELLED: issues that point at this map but carry no
+# "wayfinder:*" label. Step 1 finds children by QUERYING the four labels, so
+# such a ticket is invisible to it — in no bucket, never swept, never blocking
+# anything. Catching them needs the separate unfiltered scan in step 1b.
+#
 # GitLab/glab specific. Requires: glab (authenticated in this repo), jq.
 # glab prints a multi-config warning on stdout, so every payload is stripped to
 # its first '[' or '{' before jq sees it.
@@ -30,6 +35,47 @@ strip() { sed 's/^[^[{]*//'; }
 ALL="$(for L in research task grilling prototype; do
          glab issue list --label "wayfinder:$L" --all --output json --per-page 100 2>/dev/null | strip
        done | jq -s 'add // [] | unique_by(.iid)')"
+
+# 1b. orphan scan: open issues carrying NO wayfinder:* label, checked against the
+#     same "Part of:" pointer step 2 uses. Bounded — ORPHAN_MAX open issues, most
+#     recent first — because this one is unfiltered and a busy project is large.
+#     The bound and the scanned count are printed with the result: "no orphans"
+#     must never be indistinguishable from "did not look".
+ORPHAN_MAX="${ORPHAN_MAX:-500}"
+ORPHAN_OK=1
+RAW=""
+PAGE=1
+while [ "$PAGE" -le $(( (ORPHAN_MAX + 99) / 100 )) ]; do
+  P="$(glab api "projects/:fullpath/issues?per_page=100&page=$PAGE&state=opened&order_by=created_at&sort=desc" 2>/dev/null | strip || true)"
+  N="$(printf '%s' "$P" | jq 'length' 2>/dev/null || true)"
+  # N must be an actual integer. jq's exit code is NOT the test: fed the empty
+  # string a failed glab leaves behind, jq prints nothing and still exits 0 —
+  # which read as "0 issues", i.e. a failed scan reporting "no orphans found".
+  case "$N" in
+    ''|*[!0-9]*)
+      # A failed FIRST page means the scan never ran; a failed later page means
+      # it ran partially. Either way the report below stays honest.
+      [ "$PAGE" -eq 1 ] && ORPHAN_OK=0
+      break
+      ;;
+  esac
+  RAW="$RAW$P"
+  [ "$N" -lt 100 ] && break
+  PAGE=$(( PAGE + 1 ))
+done
+
+SCANNED=0
+ORPHANS='[]'
+if [ "$ORPHAN_OK" = "1" ]; then
+  SCANNED="$(printf '%s' "$RAW" | jq -s 'add // [] | length')"
+  # Same "Part of:" regex as `parented` below — the two must not drift.
+  ORPHANS="$(printf '%s' "$RAW" | jq -s --arg map "$MAP" '
+    add // []
+    | map(select(((.labels // []) | map(select(startswith("wayfinder:"))) | length) == 0))
+    | map(select((.description // "") | test("Part of:[^\n]*(work_items/" + $map + "\\)|#" + $map + "\\))")))
+    | map({iid, title, url: .web_url})
+    | sort_by(.iid)')"
+fi
 
 # 2. children of this map, with their declared blockers
 CHILDREN="$(printf '%s' "$ALL" | jq --arg map "$MAP" '
@@ -72,8 +118,30 @@ OUT="$(printf '%s' "$CHILDREN" | jq --argjson known "$KNOWN" '
                else "TAKEABLE" end)
     })')"
 
+# The orphan report. In --json mode it goes to STDERR: stdout stays the bare
+# array of children that collect already parses, so this stays a pure addition.
+orphan_report() {
+  if [ "$ORPHAN_OK" = "0" ]; then
+    printf 'UNLABELLED — SCAN FAILED (glab api). Orphans are NOT ruled out.\n'
+    return
+  fi
+  local n
+  n="$(printf '%s' "$ORPHANS" | jq 'length')"
+  if [ "$n" -eq 0 ]; then
+    printf 'UNLABELLED — none, across %s open issue(s) scanned (cap ORPHAN_MAX=%s)\n' "$SCANNED" "$ORPHAN_MAX"
+    return
+  fi
+  printf '%s' "$ORPHANS" | jq -r --arg scanned "$SCANNED" '
+    "UNLABELLED — \(length) issue(s) point at this map but carry no wayfinder:* label\n"
+    + "  In no bucket above: never swept, never blocking, invisible to every run.\n"
+    + "  Label each one, then re-run:  glab issue update <iid> --label \"wayfinder:<type>\"\n"
+    + (map("  #\(.iid) \(.title)\n        \(.url)") | join("\n"))
+    + "\n  (\($scanned) open issue(s) scanned)"'
+}
+
 if [ "$JSON" = "1" ]; then
   printf '%s\n' "$OUT"
+  orphan_report >&2
   exit 0
 fi
 
@@ -91,3 +159,5 @@ printf '%s' "$OUT" | jq -r --arg map "$MAP" '
   + "\nby type, still open: "
   + ([ .[] | select(.state != "closed") | .type ] | group_by(.) | map("\(.[0])=\(length)") | join("  "))
 '
+printf '\n'
+orphan_report

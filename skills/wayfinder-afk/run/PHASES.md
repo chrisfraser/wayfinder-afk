@@ -25,7 +25,7 @@ Load the map body: destination, Notes, standing constraints, Decisions so far. *
 
 Each **round**:
 
-1. Recompute the frontier. Take every TAKEABLE `research` ticket and every TAKEABLE `task` ticket that has no human-only step.
+1. Recompute the frontier. Take every TAKEABLE `research` ticket and every TAKEABLE `task` ticket that has no human-only step. Read the **UNLABELLED** section first and label anything it names — those tickets are attached to this map but in no bucket, so the round is working from an incomplete picture until they're fixed.
 2. Launch one subagent per ticket, all in one message. Each claims its ticket **before** any work.
 3. A `task` ticket needing hardware, credentials, money, or a human hand is **not** AFK: the subagent leaves a precise do-this checklist on the ticket, leaves it open, and reports it as blocked on the human.
 4. Collect results. Only the lead touches the map: append closed tickets to Decisions so far, graduate fog, create-then-wire any new tickets the subagents proposed — **each filed with its `wayfinder:<type>` label and a `Part of:` pointer at this map, or the next round's frontier will not see it** (TEMPLATES.md, and the crib in PLAYBOOK.md) — and add escalations to the review queue.
