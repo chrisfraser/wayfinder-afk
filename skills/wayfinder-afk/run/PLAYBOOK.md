@@ -171,6 +171,8 @@ Stop the phase-1 loop when any of: no TAKEABLE research/task ticket remains; a r
 - `glab` prints a multi-config warning **on stdout** — strip to the first `[`/`{` before parsing JSON. Use `--output json`; `-F` is output-*format*, not JSON.
 - Claim: `glab issue update <iid> --assignee <user>`. Comment: `glab issue note <iid> --message "..."` (heredoc for multi-line).
 - Close: comment first, then `glab issue close <iid>` — close takes no message.
+- **File: `glab issue create --title "<title>" --label "wayfinder:<type>" --description "<body>"`** — `<type>` is exactly one of `research`, `task`, `grilling`, `prototype`. Body from the new-ticket template in TEMPLATES.md.
 - Children are found by their `Part of: … (#<map>)` body pointer; blocking by a `## Blocked by` list of links in the body. Both are what `scripts/map-frontier.sh` parses.
+- **A ticket filed without its `wayfinder:<type>` label does not exist.** `map-frontier.sh` builds the frontier by *querying those four labels* — an unlabelled ticket is in no bucket, is never swept, never blocks anything, and never appears in a handover. Same for a missing `Part of:` pointer: correctly labelled, but attached to no map. Verify both immediately after filing — `glab issue view <iid> --output json | jq '{labels, description}'` — before wiring anything to it.
 - When a blocker closes, strike it through in the blocked ticket's `## Blocked by` list rather than deleting it, and say what changed.
 - Anything whose *failure* must be seen — builds, tests — is asserted on a positive signal (`BUILD SUCCESSFUL`, a parsed result file), never on the absence of errors, and is run with any output filter bypassed (`rtk proxy <cmd>`, if that's the filter).

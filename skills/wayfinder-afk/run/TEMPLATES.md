@@ -32,6 +32,34 @@ Exact shapes to post. Keep the headings — the next run and the frontier script
 <!-- wayfinder:agent -->
 ```
 
+## New ticket — filing one
+
+Filed with `--label "wayfinder:<type>"` (`research` | `task` | `grilling` | `prototype`). The label and the `Part of:` line are not decoration: `map-frontier.sh` queries the label to find the ticket at all, and reads the pointer to attach it to a map. Miss either and the ticket is filed into a void.
+
+```markdown
+Part of: [<map title>](<map url>)
+
+## What this is
+
+<the question or the work, stated so someone can take it cold>
+
+## Why it's separate
+
+<what made it specifiable — the finding that split it out of #<iid>>
+
+## Done when
+
+<the observable result that closes this>
+
+## Blocked by
+
+- [<ticket name>](<url>) — #<iid>
+```
+
+Both parsed shapes are exact. The `Part of:` URL must end in `work_items/<map>` or `#<map>` — a link to the map's page is what the regex reads. Each `## Blocked by` row carries a **literal `#<iid>`** alongside the name; the blocker scan reads digits after a `#` and cannot see an id that only exists inside a link target.
+
+Omit `## Blocked by` entirely when nothing blocks it — an empty section reads as unparsed, not as unblocked.
+
 ## Task ticket that turned out to need the human
 
 Post this, leave the ticket **open** and **unassigned**. A bare list of steps is the fallback — if the steps can be collapsed into one command, build the probe and lead with it.

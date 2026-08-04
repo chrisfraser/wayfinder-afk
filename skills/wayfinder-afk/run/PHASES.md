@@ -28,7 +28,7 @@ Each **round**:
 1. Recompute the frontier. Take every TAKEABLE `research` ticket and every TAKEABLE `task` ticket that has no human-only step.
 2. Launch one subagent per ticket, all in one message. Each claims its ticket **before** any work.
 3. A `task` ticket needing hardware, credentials, money, or a human hand is **not** AFK: the subagent leaves a precise do-this checklist on the ticket, leaves it open, and reports it as blocked on the human.
-4. Collect results. Only the lead touches the map: append closed tickets to Decisions so far, graduate fog, create-then-wire any new tickets the subagents proposed, add escalations to the review queue.
+4. Collect results. Only the lead touches the map: append closed tickets to Decisions so far, graduate fog, create-then-wire any new tickets the subagents proposed — **each filed with its `wayfinder:<type>` label and a `Part of:` pointer at this map, or the next round's frontier will not see it** (TEMPLATES.md, and the crib in PLAYBOOK.md) — and add escalations to the review queue.
 5. Loop. Stop when no TAKEABLE research/task ticket remains, when a round closes nothing new, or after 4 rounds — then say which and why.
 
 ## Phase 2 — Grilling frontier pass
