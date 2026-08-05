@@ -51,7 +51,7 @@ Follow `RUN.md`'s device order. Never reorder in a way that picks a radio up twi
 **Ask how each probe should be run.** Two modes:
 
 - **They run it** — give the exact command, the shape of a good result, and what each outcome implies. They paste the output.
-- **The agent runs it** — only for a **read-only** probe on a device the run can already reach. Say which device, and confirm before the first one.
+- **The agent runs it** — only for a **read-only** probe on a device the run can already reach, and only under this map's lease (`scripts/device-lease.sh claim <serial> <map>` — once at bench start, not per probe; release when the stage ends). Say which device, and confirm before the first one. Lease held by another map? Name it and offer the choice: defer, or the human runs it themselves — leases govern agents, not people.
 
 **Reading the logs** is the third source, and often the best one for anything asynchronous: tail with a filter (`adb logcat -s <TAG>` or the app's tag) while they perform the gesture, then interpret. Use it when the probe's evidence is a log line rather than a command's exit. Start the tail *before* telling them to act.
 

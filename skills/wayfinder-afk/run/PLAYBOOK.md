@@ -120,6 +120,8 @@ Tracker: read docs/agents/issue-tracker.md for the exact CLI.
    the branch on the ticket. NEVER push, merge, or commit to main — a run that dies
    mid-way must strand nothing and touch nothing shared. Branch off the ORIGINAL HEAD,
    not whatever HEAD happens to be — in a shared worktree it may have moved under you.
+   Leave the tree clean: commit everything you mean to keep, delete everything you
+   don't. A file you leave uncommitted dies with the worktree and appears in no report.
 8. Do NOT edit the map body. Do NOT close a grilling or prototype ticket.
 
 Report back, in this order:
@@ -218,13 +220,18 @@ Take the **lowest rung that actually answers the question**. Go up only when the
 
 Build probes; don't drive the user's kit with them. A **read-only** self-test on a device the run explicitly owns is fine. Never install, flash, factory-reset, or **reboot** — a reboot ended Wi-Fi ADB permanently on a radio with an empty `persist.adb.tcp.port` and stranded it for the rest of the run. If a probe can only be validated by running it, hand it over unvalidated and say so.
 
+### Sharing the bench between runs
+
+Two AFK sessions on different maps may reach for the same devices, so "owns" is established by **lease**, never by assumption: `scripts/device-lease.sh claim <serial> <map>` before the first command reaches a device, `release <serial> <map>` at handover, re-claim to renew. Leases expire (default 60 min) so a dead run can't hold a radio forever — a run at the bench longer than that renews as it goes. The **lead** claims and releases; subagents inherit the serial through their brief and never manage leases themselves — one owner per resource, same as the map body. A refused claim prints which map holds the device: that probe is handed over `compiled only, never run`, the report says which map had the hardware, and nobody waits — busy is an answer, and breaking a live lease is driving a radio someone else is mid-conversation with. Leases are host-local (`~/.wayfinder/leases`, override `WAYFINDER_LEASE_DIR`) because the hardware is host-attached; a bench shared across machines needs a tracker-side convention this script doesn't pretend to cover.
+
 ## Subagent brief — probe / bench app
 
 ```
 Question: #<iid> Q<n> — <the question, verbatim as posted>
 Map: #<map>. Options on the table: <A / B / C, verbatim>.
-Owns hardware: <device, or none>. Must not touch: <devices>.
-Must not run: reboot, install, flash, factory reset.
+Owns hardware: <device, or none — the lead holds its lease>. Must not touch: <devices>.
+Must not run: reboot, install, flash, factory reset. Never claim or release a lease
+yourself — the lead does; if the device refuses you anyway, report it, don't retry.
 
 Build the smallest artifact that turns this question into a one-command verdict for a
 human at the bench. Cost ladder and probe contract: PLAYBOOK.md — take the lowest rung
@@ -253,7 +260,7 @@ Report back:
 - Re-read the map body immediately before editing it — another session may be working the same map.
 - **Any subagent that writes files gets `isolation: "worktree"`.** Observed failure without it: parallel agents each ran `git switch -c … ` off "current HEAD" in the same worktree, so their branches chained off one another instead of off the starting commit, one agent declined to commit at all rather than corrupt a peer's tree, and the run ended parked on a research branch. Read-only agents — grilling and prototype prep that only post comments — do not need it and shouldn't pay for it.
 - **The bench kit is one directory with many writers.** Give each probe agent `isolation: "worktree"` and its own branch `wayfinder/<map>-bench-<slug>`; the lead merges them into `wayfinder/<map>-bench`. The lead writes `RUN.md` **last**, once it knows the full set — it has a single author for the same reason the map body does.
-- **Hardware is a shared, mutable resource, so assign it explicitly.** Name in each brief which device that agent owns and which it must not touch, or two agents will drive the same radio. Say what must not be run at all: a reboot can end an ADB session permanently and strand the device mid-run.
+- **Hardware is a shared, mutable resource, so assign it explicitly — at both grains.** Across runs, the lead holds the **lease** for every device its agents are told they own (sharing the bench, above); within the run, name in each brief which device that agent owns and which it must not touch, or two agents will drive the same radio. Say what must not be run at all: a reboot can end an ADB session permanently and strand the device mid-run.
 
 ## Loop guards
 
@@ -273,9 +280,11 @@ Stop the phase-1 loop when any of: no TAKEABLE research/task ticket remains; a r
 - Children are found by their `Part of: … (#<map>)` body pointer; blocking by a `## Blocked by` list of links in the body. Both are what `scripts/map-frontier.sh` parses.
 - **A ticket filed without its `wayfinder:<type>` label does not exist.** `map-frontier.sh` builds the frontier by *querying those four labels* — an unlabelled ticket is in no bucket, is never swept, never blocks anything, and never appears in a handover. Same for a missing `Part of:` pointer: correctly labelled, but attached to no map.
 - `map-frontier.sh` also prints a **COVERAGE** line, and it governs whether the buckets can be trusted at all: `complete` (every label query read to exhaustion), `TRUNCATED` (hit the `PAGE_CAP` page cap, default 50 pages = 5000 tickets per label — re-run with `PAGE_CAP` higher), or `QUERY FAILED`. On either of the latter two the missing tickets are absent from **every** bucket, so a short read looks exactly like a small map. Don't sweep on a frontier that isn't `complete`.
-- **COMPLETE BUT OPEN** is the section to read first, every round. It lists open tickets that already carry a resolution comment — work that was done and never closed. These are free closes, and they do not surface any other way: the subagent claimed the ticket before starting, so a failed close leaves it in CLAIMED, which no round retakes. Same three outcomes as below, and `CHECK INCOMPLETE` is not `none`. A ticket holding a "Needs a human — checklist" is deliberately open and is never flagged.
+- **COMPLETE BUT OPEN** is the section to read first, every round. It lists open tickets that already carry a resolution comment — work that was done and never closed. These are free closes, and they do not surface any other way: the subagent claimed the ticket before starting, so a failed close leaves it in CLAIMED, which no round retakes. Same three outcomes as below, and `CHECK INCOMPLETE` is not `none`. A ticket holding a "Needs a human — checklist", or whose latest word is a frontier awaiting answers, is deliberately open and is never flagged.
 - `map-frontier.sh` catches the first case itself: its **UNLABELLED** section lists open issues pointing at this map that carry no `wayfinder:*` label. Read it every round and fix what it names (`glab issue update <iid> --label "wayfinder:<type>"`) before taking anything. It reports one of three things and they are not interchangeable — a list, `none, across <n> ... scanned`, or `SCAN FAILED`. **`SCAN FAILED` is not "none"**; it means the check didn't run and orphans are still possible. The scan covers open issues only, newest first, capped at `ORPHAN_MAX` (default 500) — raise it on a big project.
 - The script's other sections each demand something: **STALE CLAIM** (handed off but still assigned — `--unassign`); **CLAIMED, NO RESOLUTION** (claimed, nothing posted: a live run or a dead one — must name nothing this round claimed by round's end); **LOOSE POINTER** (labelled, mentions the map, `Part of:` doesn't parse — fix the body, the ticket is in no bucket); **BLOCKER LOOKUP FAILED** (blocker unreadable, treated as open — its dependents stay BLOCKED until verified by hand).
 - Push — **lead only, at handover**: `git push -u origin wayfinder/<branch>` for every branch the run created. Never `main`, never a merge into anything shared.
+- Draft MR — **lead only, at handover, and only for work meant to land**: `glab mr create --draft --source-branch wayfinder/<branch> --target-branch main --title "<title>" --description "<body>"`. Creating the MR is not merging it — the merge stays the human's. Bench and prototype branches get no MR; pushed is their terminal state.
+- Hardware lease — **lead only**: `bash scripts/device-lease.sh claim <serial> <map>` before any device is touched, `release <serial> <map>` at handover, `list` to see the bench. Exit 3 = held by another map: report it, hand the probe over unvalidated, move on.
 - When a blocker closes, strike it through in the blocked ticket's `## Blocked by` list rather than deleting it, and say what changed.
 - Anything whose *failure* must be seen — builds, tests — is asserted on a positive signal (`BUILD SUCCESSFUL`, a parsed result file), never on the absence of errors, and is run with any output filter bypassed (`rtk proxy <cmd>`, if that's the filter).

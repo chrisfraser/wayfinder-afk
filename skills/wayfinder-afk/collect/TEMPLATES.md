@@ -177,6 +177,7 @@ Round <n+1> posted: <ticket name> (<n> questions)
 <Build authorized: <items> — tickets filed, `/wayfinder-afk <map>` sweeps them · or · All Done-when items met — map closed / closure declined: <their words>>
 Now takeable: <ticket name> · … → `/wayfinder-afk <map>`
 Still on you: <what, and why it couldn't be settled here>
+<if the session touched files or hardware: Tree clean, <n> commit(s) pushed to `wayfinder/<map>-bench` · leases released: <serial>>
 ```
 
 ---

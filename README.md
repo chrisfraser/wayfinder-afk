@@ -19,7 +19,7 @@ Three jobs, in order.
 2. **Frontier** — the human-in-the-loop tickets (`grilling`, `prototype`) are *prepared*, never resolved. Each gets investigated to the exact point where your judgement is genuinely needed, then one **frontier comment**: facts established, decisions to ratify, and numbered questions — each with why it matters, the options, a recommendation, and what would settle it. A `prototype` ticket gets its rough artifact built first, so you're reacting to something concrete.
 3. **Bench kit** — for every remaining question it asks: *is this a preference, or a fact nobody went and got?* A fact a machine can fetch isn't a question, it's an unbuilt probe. It builds the smallest thing that turns each one into a one-command verdict — a one-liner, a shell probe, a test, or as a last resort a throwaway bench app — collected in `bench/<map>/` with a session plan ordered so you pick up each device once.
 
-You come back to a map where the easy work is closed, the hard work is a numbered list, and most of the list has a command that answers it.
+You come back to a map where the easy work is closed, the hard work is a numbered list, and most of the list has a command that answers it. The repo comes back clean: everything the run made is committed and pushed — a draft MR where work is meant to land, a throwaway `wayfinder/*` branch where it isn't — and never a dirty tree. Runs on different maps can share a machine and a bench: tickets are claimed, branches are namespaced, and devices are taken by lease (`scripts/device-lease.sh`), so two unattended runs won't drive the same radio.
 
 ### `/wayfinder-afk collect #23` — the guided session
 
@@ -65,7 +65,7 @@ skills/wayfinder-afk/
   collect/STAGES.md    the guided session: ratify, grill, reconcile, bench, apply
   collect/PLAYBOOK.md  grouping, ordering, parsing answers, applying idempotently
   collect/TEMPLATES.md what you see in the session, and what gets written to the tracker
-  scripts/             map-frontier.sh · answers.sh · bench-scaffold.sh
+  scripts/             map-frontier.sh · answers.sh · bench-scaffold.sh · device-lease.sh
 ```
 
 ## How the two halves stay in sync

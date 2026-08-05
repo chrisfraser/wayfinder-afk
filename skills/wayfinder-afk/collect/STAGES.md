@@ -62,7 +62,7 @@ Before a single probe runs, state what stage 2 did to the kit. Four classes — 
 
 One probe at a time, in `RUN.md`'s device order so hardware is picked up once. For each: the precondition, the one command, what a good result looks like, and what each outcome implies.
 
-Two ways to get a result, and **ask which**: they run it and paste, or — read-only probe, device the session can reach — the agent runs it and reads the logs itself. Physical gestures are always theirs. The hardware bans from run mode still hold: no install, flash, or reboot without them saying so.
+Two ways to get a result, and **ask which**: they run it and paste, or — read-only probe, device the session can reach — the agent runs it and reads the logs itself. Physical gestures are always theirs. The hardware bans from run mode still hold: no install, flash, or reboot without them saying so. Before the agent's first touch of any device, claim its lease (`scripts/device-lease.sh claim <serial> <map>`) — another map's session may be at the same bench. A refused lease names the holder; say so and let the human decide: defer the probe, or run it themselves (their hands aren't leased — the lease governs agents, not people). Release every lease when the bench stage ends.
 
 A `VERDICT:` line settles its question immediately; say so and move on. A `PRECONDITION:` line is **not** an answer — it means the probe never ran. If a verdict contradicts an answer from stage 2, stop and say so plainly; the evidence outranks the armchair.
 
@@ -71,6 +71,8 @@ A `VERDICT:` line settles its question immediately; say so and move on. A `PRECO
 ## Stage 4 — Apply and report
 
 Most of it is already banked. Finish the map body, close what is fully answered, post round n+1 frontiers for what is not, wire new tickets, unblock dependents, graduate fog. **A close folds first**: whatever on the ticket the map will still need — facts, ratified calls, artifact links — goes into the map body before the state flips, so nothing durable lives only inside a closed ticket. A ticket with a **deferred** question does not close — deferral is an open state, and a closed ticket has no next frontier to carry it; it stays open with the round n+1 frontier naming what's deferred.
+
+Anything the session built — an inline probe, a rewritten verdict mapping — is committed to the bench branch and pushed; the session ends with the tree clean and every device lease released, same as a run.
 
 **Then score the arrival.** Walk `## Done when` item by item: met, decided but unbuilt, undecided. If anything is decided-but-unbuilt and the Notes don't authorize building, ask now — the human is in the room: one picker, "the map is fully decided on <items> — authorize the build?" On yes, the lead amends Notes to say so and promotes or files the build tickets; the next run sweeps them. If **every** item is met, propose closing the map itself — same picker, their call. Report leads with the arrival score and the net, then everything else; if anything is now TAKEABLE, offer `/wayfinder-afk <map>` rather than sweeping here.
 

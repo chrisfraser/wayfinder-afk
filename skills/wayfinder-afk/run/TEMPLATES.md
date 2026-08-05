@@ -307,11 +307,12 @@ A failed **precondition** prints `PRECONDITION:` and exits non-zero — that is 
 **New tickets (<n>)** — <ticket name> (<type>, blocked by <…>) — <why the ticket test passed>
 **Questions folded into existing frontiers (<n>)** — onto <ticket name>: <n> · …
 **Held as candidates (<n>)** — not filed; on the map body under Candidate tickets
-**Branches (<n>, pushed)** — `wayfinder/<map>-<iid>-<slug>` — <what's on it>
+**Branches (<n>, pushed, tree clean)** — `wayfinder/<map>-<iid>-<slug>` — <what's on it> — <draft MR !<id> | throwaway, no MR>
+<if hardware was leased: **Hardware** — leases released: <serial> · <serial>>
 **Bench kit** — `bench/<map>/RUN.md` on `wayfinder/<map>-bench`: <n> probes settling <n> of the <n> open questions, ~<n> min at the bench. Start with `bash bench/<map>/run-all.sh`. <n> questions are judgement-only. <n> probes are compiled but never run.
 **Fog graduated / newly visible** — <one line>
 
-Loop stopped because: <no takeable tickets | fixpoint | round cap>.
+Loop stopped because: <no takeable tickets | fixpoint | two net-positive rounds | round cap>.
 
 **When you've answered:** `/wayfinder-afk collect <map>` picks the answers up from these tickets and moves the map.
 
