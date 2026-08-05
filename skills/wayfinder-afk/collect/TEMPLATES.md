@@ -55,13 +55,26 @@ Declining costs: <what has to be redone or re-asked>
 
 Then `AskUserQuestion` — one group per turn, never more:
 
-- **header**: `Group <n>` (≤12 chars)
-- **question**: the shared premise, then **every call in the group, numbered, one clause each**, then `— approve all <n>?`. Example: `The SOS frontiers scoped their questions — (1) the latch ruling covers only what clears RAISED on the POC half, (2) option (b) is off Q1's menu, (3) …, (4) … — approve all 4?`
+- **header**: confidence rides in the chip — `G<n> · HIGH`, `Solo · MED` (≤12 chars)
+- **question**: **lines, not prose.** Newlines survive in every client; a wall of numbered clauses spliced with semicolons does not. Premise on the first line with the confidence in caps, one call per line, a blank line before the ask:
+
+  ```
+  Scope of the panic-latch ruling (#395) — 3 calls, all HIGH confidence.
+
+  1. The ticket rules only on what clears the raised latch — the latch design itself is settled, not reopened.
+  2. "Clear on DMR SOS end" is off the menu — the guarding-tag raises no DMR SOS, so it would be an expiry with a duration nobody chose.
+  3. The DMR half is untouched — a second real emergency still raises a second alarm; only the POC half is defective.
+
+  Approve all 3?
+  ```
+
 - **options**: `Approve all <n> (Recommended)` · `Decline all <n>` · `Split — ask individually`
 
 **The picker stands alone — in every client.** The phone renders it as a modal over the transcript; the terminal shows it with the card scrolled away or never rendered at all (text emitted between tool calls is not reliably shown). Nothing the decision needs may live only in the transcript — the question carries the calls, the option descriptions carry the stakes, and both read cold: every coined name glossed in place (`the latch ruling — cancel() only clears RAISED on the POC half —` not `the latch ruling stays scoped`), no option letters or ticket ids standing in for content. The card still prints for the full why and reversal costs; the picker is written as if it doesn't exist. A group whose calls won't compress to a clause each is split before it is asked.
 
 Option descriptions speak the group's own subject matter — what approving makes standing, what declining re-opens — never session mechanics ("stage 2 will re-derive…" tells the human nothing about the calls).
+
+**Confidence pops, twice.** It is the one fact that changes how hard the human looks, so it lives where a skim can't miss it: the chip (`G3 · HIGH`) and the question's first line, in caps. Groups are all-high by construction — [PLAYBOOK.md](PLAYBOOK.md) never groups a medium call — so a medium call is asked alone, its question leading with `MEDIUM confidence —` then the call, what would falsify it, and what reversing costs, each on its own line.
 
 Drop the recommendation marker when the group contains anything medium-confidence. A call that amends a standing constraint is **never** in a group — ask it alone, with the constraint's current text quoted.
 
@@ -91,7 +104,7 @@ Unblocks: #<iid>, #<iid>
 
 Then `AskUserQuestion` with the options as given, recommendation first. They can always answer in their own words instead — take the words over the letter.
 
-Stand-alone here too: the picker's question field carries the question **and** the one-clause why-it-matters; each option's description says what choosing it commits, in the ticket's subject matter, cold-readable — no client shows the card alongside the picker, so the fields are the whole context.
+Stand-alone here too, and in lines: the question field carries the question on its first line, then `Why it matters: <clause>` on its own line (and `Rests on: <the earlier answer>` when it does); each option's description says what choosing it commits, in the ticket's subject matter, cold-readable — no client shows the card alongside the picker, so the fields are the whole context.
 
 **After every answer**, before the next question:
 
