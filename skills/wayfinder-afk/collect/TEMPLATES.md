@@ -55,7 +55,7 @@ Declining costs: <what has to be redone or re-asked>
 
 Then `AskUserQuestion` — one group per turn, never more:
 
-- **header**: confidence rides in the chip — `G<n> · HIGH`, `Solo · MED` (≤12 chars)
+- **header**: progress and confidence ride in the chip — `G3/9 · HIGH`, `S2/4 · MED` (≤12 chars). `<n>/<m>` is this group's position over the whole stage-1 queue; a split that enqueues members grows `m`, and the chip says so by just showing the new number.
 - **question**: **lines, not prose.** Newlines survive in every client; a wall of numbered clauses spliced with semicolons does not. Premise on the first line with the confidence in caps, one call per line, a blank line before the ask:
 
   ```
@@ -74,7 +74,7 @@ Then `AskUserQuestion` — one group per turn, never more:
 
 Option descriptions speak the group's own subject matter — what approving makes standing, what declining re-opens — never session mechanics ("stage 2 will re-derive…" tells the human nothing about the calls).
 
-**Confidence pops, twice.** It is the one fact that changes how hard the human looks, so it lives where a skim can't miss it: the chip (`G3 · HIGH`) and the question's first line, in caps. Groups are all-high by construction — [PLAYBOOK.md](PLAYBOOK.md) never groups a medium call — so a medium call is asked alone, its question leading with `MEDIUM confidence —` then the call, what would falsify it, and what reversing costs, each on its own line.
+**Confidence pops, twice.** It is the one fact that changes how hard the human looks, so it lives where a skim can't miss it: the chip (`G3/9 · HIGH`) and the question's first line, in caps. Groups are all-high by construction — [PLAYBOOK.md](PLAYBOOK.md) never groups a medium call — so a medium call is asked alone, its question leading with `MEDIUM confidence —` then the call, what would falsify it, and what reversing costs, each on its own line.
 
 Drop the recommendation marker when the group contains anything medium-confidence. A call that amends a standing constraint is **never** in a group — ask it alone, with the constraint's current text quoted.
 
@@ -100,11 +100,13 @@ Unblocks: #<iid>, #<iid>
 
 **`Q<n>` is the number that question carries on its own ticket's frontier — never a session counter.** It is the human's answer key: they reply `Q3 B` into that frontier comment, and a renumbered question lands the answer on the wrong row. Numbers repeat across tickets, so the **ticket name always rides beside it** — and it is the ticket's *title*, not a bare `#295`. The id travels inside the name's link; it never stands in for it.
 
-**Progress does not belong in this header.** It has exactly one writer — the after-answer block below — and a card that also counts will contradict it the moment a question is pruned.
+**Progress does not belong in this card header.** It lives in two places only — the picker's chip and the after-answer block below — and both are recomputed from the live pool on every turn, so they can never disagree. A card that also counts goes stale on the first prune.
 
 Then `AskUserQuestion` with the options as given, recommendation first. They can always answer in their own words instead — take the words over the letter.
 
 Stand-alone here too, and in lines: the question field carries the question on its first line, then `Why it matters: <clause>` on its own line (and `Rests on: <the earlier answer>` when it does); each option's description says what choosing it commits, in the ticket's subject matter, cold-readable — no client shows the card alongside the picker, so the fields are the whole context.
+
+The chip carries progress: `17 of 58` — answered so far, over answered-plus-still-open. Never `Q17`: Q-numbers are frontier answer keys, and a chip that looks like one lands an answer on the wrong row. The totals are recomputed after every prune and unlock, same as the after-answer block — `58` may shrink or grow between questions, and that movement is real, not a glitch.
 
 **After every answer**, before the next question:
 
@@ -167,7 +169,7 @@ Means: `VERDICT: <x>` → **A** · `VERDICT: <y>` → **B**
 <read-only | MUTATES <what> — undo: `<cmd>`>
 ```
 
-Then ask how: `You run it, I read the output` · `I run it — read-only, on <device> (Recommended)` · `Watch the logs while you do the gesture` · `Skip this one`. The ask-how picker's question names the probe, its device, and what it settles — stand-alone, like every picker.
+Then ask how: `You run it, I read the output` · `I run it — read-only, on <device> (Recommended)` · `Watch the logs while you do the gesture` · `Skip this one`. The ask-how picker's question names the probe, its device, and what it settles — stand-alone, like every picker — and its chip carries progress: `Probe 3/7`.
 
 For the log mode, start the tail **before** telling them to act:
 
