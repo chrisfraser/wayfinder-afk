@@ -31,47 +31,81 @@ command -v jq   >/dev/null || { echo "map-frontier: jq not found"   >&2; exit 12
 
 strip() { sed 's/^[^[{]*//'; }
 
+# Pages a GitLab issues query to exhaustion. `glab issue list --all` does NOT do
+# this: -A/--all selects all STATES, while -p/--page is the pagination flag it
+# never passes — so a label with more than 100 tickets came back silently short,
+# and a truncated frontier was indistinguishable from a complete one.
+#
+# Results land in $FETCH_RESULT rather than on stdout, deliberately: called as
+# `X="$(fetch_pages ...)"` the function would run in a subshell and its status
+# globals would be discarded at exactly the moment they matter.
+#   FETCH_OK        0 if the FIRST page failed — the query never ran at all
+#   FETCH_TRUNCATED 1 if results were cut short, by the page cap or a mid-run error
+#   FETCH_COUNT     issues actually retrieved
+PAGE_CAP="${PAGE_CAP:-50}"          # 50 pages x 100 = 5000 issues per query
+
+fetch_pages() {                     # $1 = query (no per_page/page), $2 = page cap
+  local q="$1" maxp="$2" page=1 raw="" p n
+  FETCH_OK=1; FETCH_TRUNCATED=0; FETCH_COUNT=0
+  while [ "$page" -le "$maxp" ]; do
+    p="$(glab api "${q}&per_page=100&page=${page}" 2>/dev/null | strip || true)"
+    n="$(printf '%s' "$p" | jq 'length' 2>/dev/null || true)"
+    # n must be an actual integer. jq's exit code is NOT the test: fed the empty
+    # string a failed glab leaves behind, jq prints nothing and still exits 0 —
+    # which reads as "0 issues", i.e. a failed query reporting an empty project.
+    case "$n" in
+      ''|*[!0-9]*)
+        if [ "$page" -eq 1 ]; then FETCH_OK=0; else FETCH_TRUNCATED=1; fi
+        break
+        ;;
+    esac
+    raw="$raw$p"
+    FETCH_COUNT=$(( FETCH_COUNT + n ))
+    # A short page is the only proof the results ran out. Reaching the cap on a
+    # FULL page means more remain, which is truncation and must be said.
+    if [ "$n" -lt 100 ]; then
+      FETCH_RESULT="$(printf '%s' "$raw" | jq -s 'add // []')"
+      return 0
+    fi
+    page=$(( page + 1 ))
+  done
+  if [ "$FETCH_OK" = "1" ]; then FETCH_TRUNCATED=1; fi
+  FETCH_RESULT="$(printf '%s' "$raw" | jq -s 'add // []')"
+  return 0
+}
+
 # 1. every wayfinder-labelled issue, open and closed
-ALL="$(for L in research task grilling prototype; do
-         glab issue list --label "wayfinder:$L" --all --output json --per-page 100 2>/dev/null | strip
-       done | jq -s 'add // [] | unique_by(.iid)')"
+PARTS=""
+LABEL_FAIL=""
+LABEL_TRUNC=""
+for L in research task grilling prototype; do
+  fetch_pages "projects/:fullpath/issues?labels=wayfinder:$L&state=all&order_by=created_at&sort=desc" "$PAGE_CAP"
+  if [ "$FETCH_OK" = "0" ];        then LABEL_FAIL="$LABEL_FAIL $L"; fi
+  if [ "$FETCH_TRUNCATED" = "1" ]; then LABEL_TRUNC="$LABEL_TRUNC $L"; fi
+  PARTS="$PARTS$FETCH_RESULT"
+done
+ALL="$(printf '%s' "$PARTS" | jq -s 'add // [] | unique_by(.iid)')"
 
 # 1b. orphan scan: open issues carrying NO wayfinder:* label, checked against the
-#     same "Part of:" pointer step 2 uses. Bounded — ORPHAN_MAX open issues, most
-#     recent first — because this one is unfiltered and a busy project is large.
-#     The bound and the scanned count are printed with the result: "no orphans"
-#     must never be indistinguishable from "did not look".
+#     same "Part of:" pointer step 2 uses. Bounded separately — this one is
+#     unfiltered, so on a busy project it is the expensive query, and a partial
+#     orphan scan is far less damaging than a partial frontier. The bound and the
+#     scanned count are printed with the result: "no orphans" must never be
+#     indistinguishable from "did not look".
 ORPHAN_MAX="${ORPHAN_MAX:-500}"
-ORPHAN_OK=1
-RAW=""
-PAGE=1
-while [ "$PAGE" -le $(( (ORPHAN_MAX + 99) / 100 )) ]; do
-  P="$(glab api "projects/:fullpath/issues?per_page=100&page=$PAGE&state=opened&order_by=created_at&sort=desc" 2>/dev/null | strip || true)"
-  N="$(printf '%s' "$P" | jq 'length' 2>/dev/null || true)"
-  # N must be an actual integer. jq's exit code is NOT the test: fed the empty
-  # string a failed glab leaves behind, jq prints nothing and still exits 0 —
-  # which read as "0 issues", i.e. a failed scan reporting "no orphans found".
-  case "$N" in
-    ''|*[!0-9]*)
-      # A failed FIRST page means the scan never ran; a failed later page means
-      # it ran partially. Either way the report below stays honest.
-      [ "$PAGE" -eq 1 ] && ORPHAN_OK=0
-      break
-      ;;
-  esac
-  RAW="$RAW$P"
-  [ "$N" -lt 100 ] && break
-  PAGE=$(( PAGE + 1 ))
-done
+fetch_pages "projects/:fullpath/issues?state=opened&order_by=created_at&sort=desc" \
+            "$(( (ORPHAN_MAX + 99) / 100 ))"
+ORPHAN_OK="$FETCH_OK"
+ORPHAN_TRUNC="$FETCH_TRUNCATED"
+RAW="$FETCH_RESULT"
 
 SCANNED=0
 ORPHANS='[]'
 if [ "$ORPHAN_OK" = "1" ]; then
-  SCANNED="$(printf '%s' "$RAW" | jq -s 'add // [] | length')"
+  SCANNED="$FETCH_COUNT"
   # Same "Part of:" regex as `parented` below — the two must not drift.
-  ORPHANS="$(printf '%s' "$RAW" | jq -s --arg map "$MAP" '
-    add // []
-    | map(select(((.labels // []) | map(select(startswith("wayfinder:"))) | length) == 0))
+  ORPHANS="$(printf '%s' "$RAW" | jq --arg map "$MAP" '
+    map(select(((.labels // []) | map(select(startswith("wayfinder:"))) | length) == 0))
     | map(select((.description // "") | test("Part of:[^\n]*(work_items/" + $map + "\\)|#" + $map + "\\))")))
     | map({iid, title, url: .web_url})
     | sort_by(.iid)')"
@@ -118,6 +152,23 @@ OUT="$(printf '%s' "$CHILDREN" | jq --argjson known "$KNOWN" '
                else "TAKEABLE" end)
     })')"
 
+# Coverage of step 1. A frontier built from a short read is WRONG, not merely
+# small — the missing tickets are absent from every bucket, so nothing above
+# hints they exist. Say so loudly, or a partial sweep reads as a finished one.
+coverage_report() {
+  if [ -n "$LABEL_FAIL" ]; then
+    printf 'COVERAGE — QUERY FAILED for label(s):%s. The buckets above are INCOMPLETE;\n' "$LABEL_FAIL"
+    printf '           tickets of that type are missing entirely. Do not sweep on this.\n'
+  fi
+  if [ -n "$LABEL_TRUNC" ]; then
+    printf 'COVERAGE — TRUNCATED at the %s-page cap for label(s):%s. More tickets exist\n' "$PAGE_CAP" "$LABEL_TRUNC"
+    printf '           than were read. Re-run with PAGE_CAP higher before trusting the buckets.\n'
+  fi
+  if [ -z "$LABEL_FAIL" ] && [ -z "$LABEL_TRUNC" ]; then
+    printf 'COVERAGE — complete: all four label queries read to exhaustion.\n'
+  fi
+}
+
 # The orphan report. In --json mode it goes to STDERR: stdout stays the bare
 # array of children that collect already parses, so this stays a pure addition.
 orphan_report() {
@@ -128,7 +179,12 @@ orphan_report() {
   local n
   n="$(printf '%s' "$ORPHANS" | jq 'length')"
   if [ "$n" -eq 0 ]; then
-    printf 'UNLABELLED — none, across %s open issue(s) scanned (cap ORPHAN_MAX=%s)\n' "$SCANNED" "$ORPHAN_MAX"
+    if [ "$ORPHAN_TRUNC" = "1" ]; then
+      printf 'UNLABELLED — none in the first %s open issue(s), but the scan hit ORPHAN_MAX=%s\n' "$SCANNED" "$ORPHAN_MAX"
+      printf '             before running out. Older issues were NOT checked.\n'
+    else
+      printf 'UNLABELLED — none, across all %s open issue(s) (scan ran to exhaustion)\n' "$SCANNED"
+    fi
     return
   fi
   printf '%s' "$ORPHANS" | jq -r --arg scanned "$SCANNED" '
@@ -141,6 +197,7 @@ orphan_report() {
 
 if [ "$JSON" = "1" ]; then
   printf '%s\n' "$OUT"
+  coverage_report >&2
   orphan_report >&2
   exit 0
 fi
@@ -160,4 +217,5 @@ printf '%s' "$OUT" | jq -r --arg map "$MAP" '
   + ([ .[] | select(.state != "closed") | .type ] | group_by(.) | map("\(.[0])=\(length)") | join("  "))
 '
 printf '\n'
+coverage_report
 orphan_report
