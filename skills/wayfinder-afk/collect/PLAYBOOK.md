@@ -15,7 +15,7 @@ A group is a claim that these calls stand or fall together. Make it only when tr
 - anything the run recorded at **medium confidence**;
 - a call that **another map or another team** would inherit.
 
-Six to eight groups is a healthy shape for thirty calls. Two is hiding something; twenty is not grouping.
+Six to eight groups is a healthy shape for thirty calls. Two is hiding something; twenty is not grouping. A group is also sized by its picker: every member must be statable in one clause inside the question text (the picker is all a phone shows). What can't be said that briefly isn't grouped — it's split.
 
 Offer **split this group** on every group. If they take it, its members are asked individually — one per turn, each with its own card, queued ahead of the groups still to come. Splitting adds turns — it never converts the leftovers into prose.
 

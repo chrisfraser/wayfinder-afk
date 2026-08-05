@@ -56,8 +56,10 @@ Declining costs: <what has to be redone or re-asked>
 Then `AskUserQuestion` — one group per turn, never more:
 
 - **header**: `Group <n>` (≤12 chars)
-- **question**: `<the shared premise> — approve these <n> calls?`
+- **question**: the shared premise, then **every call in the group, numbered, one clause each**, then `— approve all <n>?`. Example: `The SOS frontiers scoped their questions — (1) the latch ruling covers only what clears RAISED on the POC half, (2) option (b) is off Q1's menu, (3) …, (4) … — approve all 4?`
 - **options**: `Approve all <n> (Recommended)` · `Decline all <n>` · `Split — ask individually`
+
+**The picker stands alone.** On a phone it renders as a modal over the transcript: the card, the narration, everything "directly above" is behind it, unseen. Nothing the decision needs may live only in the transcript — the question carries the calls, the option descriptions carry the stakes. The card stays in the transcript for the full why and reversal costs; the picker is written as if the card doesn't exist. A group whose calls won't compress to a clause each is split before it is asked.
 
 Option descriptions speak the group's own subject matter — what approving makes standing, what declining re-opens — never session mechanics ("stage 2 will re-derive…" tells the human nothing about the calls).
 
@@ -88,6 +90,8 @@ Unblocks: #<iid>, #<iid>
 **Progress does not belong in this header.** It has exactly one writer — the after-answer block below — and a card that also counts will contradict it the moment a question is pruned.
 
 Then `AskUserQuestion` with the options as given, recommendation first. They can always answer in their own words instead — take the words over the letter.
+
+Stand-alone here too: the picker's question field carries the question **and** the one-clause why-it-matters; each option's description says what choosing it commits, in the ticket's subject matter. On a phone none of the card above survives into the picker — write the fields as the whole context.
 
 **After every answer**, before the next question:
 
@@ -150,7 +154,7 @@ Means: `VERDICT: <x>` → **A** · `VERDICT: <y>` → **B**
 <read-only | MUTATES <what> — undo: `<cmd>`>
 ```
 
-Then ask how: `You run it, I read the output` · `I run it — read-only, on <device> (Recommended)` · `Watch the logs while you do the gesture` · `Skip this one`.
+Then ask how: `You run it, I read the output` · `I run it — read-only, on <device> (Recommended)` · `Watch the logs while you do the gesture` · `Skip this one`. The ask-how picker's question names the probe, its device, and what it settles — stand-alone, like every picker.
 
 For the log mode, start the tail **before** telling them to act:
 
