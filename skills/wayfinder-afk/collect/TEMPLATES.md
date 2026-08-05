@@ -40,7 +40,7 @@ At each point a bank would occur, show the write instead of making it:
 
 ## Stage 1 — a decision group
 
-One card, then the approve/decline. Name the shared premise in the first line — if it can't be named, it isn't a group.
+One card, then the approve/decline — **card and picker in the same turn**, the card directly above, so the context is on screen when the choice is made. Name the shared premise in the first line — if it can't be named, it isn't a group. Every call is stated **in words a stranger could judge** — never a bare `D1` or `#388`. Ticket titles carry the ids inside their links; a question line built of ids asks the human to ratify things they can't see.
 
 ```
 ### Group <n> of <m> — <the shared premise, one clause>
@@ -53,15 +53,17 @@ Declining costs: <what has to be redone or re-asked>
 <Confidence, if any member is medium. Say which.>
 ```
 
-Then `AskUserQuestion` — one question per group, up to four groups per round:
+Then `AskUserQuestion` — one group per turn, never more:
 
 - **header**: `Group <n>` (≤12 chars)
 - **question**: `<the shared premise> — approve these <n> calls?`
 - **options**: `Approve all <n> (Recommended)` · `Decline all <n>` · `Split — ask individually`
 
+Option descriptions speak the group's own subject matter — what approving makes standing, what declining re-opens — never session mechanics ("stage 2 will re-derive…" tells the human nothing about the calls).
+
 Drop the recommendation marker when the group contains anything medium-confidence. A call that amends a standing constraint is **never** in a group — ask it alone, with the constraint's current text quoted.
 
-**Four is a batch size, not a budget.** Keep issuing rounds of up to four until the queue is empty — `m` groups take `ceil(m / 4)` rounds, and the last round is as much a picker as the first. A split works the same way: its members queue up and go out four at a time.
+**One group per turn, card and picker together.** `m` groups take `m` turns, and the last is as much a picker as the first. Batching groups into one call is exactly how the context disappears: the picker renders the question lines as tabs and none of the cards, and the human is asked to ratify four things they can see one label for. A split works the same way: each member gets its own card and its own turn.
 
 **Never present an approval as prose.** Every group is decided in the picker — no listing the remainder and asking them to reply in text, no "the rest are straightforward, confirm and I'll apply them", no rolling leftovers into the stage-1 summary. The tail is where this fails: by the last round the answers feel obvious and the pull is to narrate them. A call the human didn't click is **unratified**, and applying it because nobody objected is the same error as answering a grilling question for them.
 

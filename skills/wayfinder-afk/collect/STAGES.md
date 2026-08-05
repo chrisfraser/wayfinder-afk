@@ -40,7 +40,7 @@ These come first because they are the premises everything else stands on: a decl
 
 **Group** calls that share a premise, a subsystem, or a fate — where approving them together is coherent and rejecting one would undermine the others. **Split** anything that could sensibly go the other way on its own. Always individual, never grouped: a call that **amends a standing constraint**, a call that is **irreversible or expensive to unwind**, and anything the run flagged **medium confidence**.
 
-Present each group as its own approve/decline (grouping rules and the card format in [PLAYBOOK.md](PLAYBOOK.md) and [TEMPLATES.md](TEMPLATES.md)). Offer *split this group* as a third option — a group is the agent's guess at coherence, and they may not agree with it. Ask at most four groups per round — and keep issuing rounds until the queue is empty. Four is a batch size, not a budget, and the last batch is a picker like every one before it.
+Present each group as its own approve/decline (grouping rules and the card format in [PLAYBOOK.md](PLAYBOOK.md) and [TEMPLATES.md](TEMPLATES.md)). Offer *split this group* as a third option — a group is the agent's guess at coherence, and they may not agree with it. **One group per turn, card and picker in the same turn.** The card — every call in words, why, what reversing costs, what approving commits — is the context the decision is made on, and it must be on screen at the moment of the choice; a picker whose card lives in an earlier turn is a picker with no context. Never put two groups in one `AskUserQuestion`: tabs render every question line and none of the cards. Keep issuing turns until the queue is empty — the last group gets a card and a picker like the first.
 
 Apply on the spot. A declined call is **reversed now**, and every stage-2 question that rested on it is re-derived before it is asked.
 
@@ -82,7 +82,7 @@ Anything the session built — an inline probe, a rewritten verdict mapping — 
 
 1. **Never guess.** Unread is a legitimate outcome, re-asked plainly next round. A fabricated answer is not.
 2. **Never dump.** One decision group, one question, or one probe at a time. The session is a conversation.
-3. **Every choice goes through the picker — including the last one.** Groups, questions, probe modes: each is an `AskUserQuestion`, batched at four per round until the queue is empty. Nothing the human is meant to decide is left as a paragraph they have to answer by hand. Unclicked is unanswered, and a tail of calls applied because nobody objected is not a ratification.
+3. **Every choice goes through the picker — including the last one.** Groups, questions, probe modes: each is its own `AskUserQuestion`, one per turn until the queue is empty, with its context printed in the same turn. Nothing the human is meant to decide is left as a paragraph they have to answer by hand. Unclicked is unanswered, and a tail of calls applied because nobody objected is not a ratification.
 4. **Their words outrank the recommendation.** Answered against the run's advice? Apply it and drop the argument.
 5. **Bank at every boundary** — unless `--dry-run`, which never writes anything anywhere. A session that dies loses only the questions not yet asked.
 6. **Prose beats shorthand.** `B, but only above API 30` is B *plus a constraint*, and the constraint is the valuable half.
