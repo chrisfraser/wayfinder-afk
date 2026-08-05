@@ -23,6 +23,38 @@ Escalating never stops the run. Write it to the map's review queue, note it on t
 
 Every taken call carries, on the ticket and in one line on the map: the call, confidence (high/medium), the evidence, **what would falsify it**, and **what reversing it costs**. Medium-confidence calls are still taken — flagged, not withheld.
 
+## The intake check
+
+The first thing done to any ticket, before any work on it — and often the whole of it. A ticket is a claim about the world, made when it was written. Both halves of that claim expire.
+
+**1. Is it already complete?**
+
+- The ticket's own comments — a previous run may have posted a resolution and failed to close. The frontier script's **COMPLETE BUT OPEN** section finds these, but read the comments anyway: yours may be the round that stranded one.
+- `## Decisions so far` on the map — the call may already have been taken, by an earlier round or by the human.
+- Tickets closed since this one was written — one answer often settles two questions.
+- For a `task`, the repo itself: the change may already exist, on a branch or in `main`.
+
+If it is done: post a short comment naming where it was settled, close it, read the state back, and report `closed (already complete: <where>)`. Re-doing the work is not thoroughness — it produces a second answer for the map to reconcile against the first.
+
+**2. If not, has the path to completeness changed?** The ticket was specified against a world that has since moved:
+
+- A **standing constraint amended** on the map — the ticket may now ask for something ruled out.
+- A **decision in `## Decisions so far`** that changes the approach, or removes the need for it.
+- A **blocker that closed with an answer**, not merely closed. Unblocking is not the same as leaving the work unchanged: read what the blocker actually concluded before assuming the ticket survived it intact.
+- **Another open ticket** that now covers part of this one.
+- **The code moved** — the file, API or module the ticket names may no longer exist in that shape.
+
+Then take one of four branches, and name which in your report:
+
+- **Proceed** — the premise holds. The common case; say so in one line and get on with it.
+- **Proceed narrowed** — part is already settled. Do the rest; say what you dropped and why.
+- **Re-scope** — the premise is void. Do **not** do the work as written. Post what changed and what the ticket should now ask, then **un-assign yourself** (`glab issue update <iid> --unassign`) and report it. A re-scoped ticket is a result, not a failure.
+- **Close as overtaken** — events have left nothing to do. Post why, close, verify.
+
+**Un-assigning is not optional on any branch that leaves the ticket open.** You claimed it at step 1. A ticket left open *and* assigned sits in CLAIMED, which no later round retakes — so a re-scoped ticket you stay assigned to is a ticket nobody will ever pick up. The same applies to a `task` handed to the human: post the checklist, then un-assign, or it is invisible to them too.
+
+Intake is minutes, not a phase, and it never becomes a reason to stall: every branch ends in an action taken this round. The standing rule still holds — decide or escalate, never wait.
+
 ## The ticket test
 
 Applied before filing anything, by every subagent and by the lead. Closing work is the job. Filing is the exception, and it has to earn itself — **the default is don't file**.
@@ -56,27 +88,38 @@ Tracker: read docs/agents/issue-tracker.md for the exact CLI.
 
 1. Claim it FIRST: assign the ticket to the map's dev (`--assignee <user>`), before any work.
 2. Read the full ticket body and any ticket it names.
-3. Resolve it. Research: primary sources only — source, AIDL, official docs, the code
+3. **INTAKE CHECK (PLAYBOOK.md) — before any work.** Is this already complete? If not,
+   has anything changed the path to completeness: an amended constraint, a decision
+   taken since, a blocker that closed *with an answer*, another ticket that now covers
+   part of it, code that moved? Take one of the four branches — proceed, proceed
+   narrowed, re-scope, close as overtaken — and name it in your report. The cheapest
+   ticket is the one already done; the most expensive is the one done against a premise
+   that expired.
+4. Resolve it. Research: primary sources only — source, AIDL, official docs, the code
    itself — never a secondary write-up. Task: do the work; if it needs hardware,
    credentials, money, or a human hand, STOP and produce a checklist instead.
-4. Apply the decision test (PLAYBOOK.md) to every sub-question. Take what you can
+5. Apply the decision test (PLAYBOOK.md) to every sub-question. Take what you can
    defend; escalate the rest into your report. Never stall. Apply the ticket test
    before proposing ANY new ticket — answer it here, fold it into a frontier, or
    make it fog, in that order, and file only what survives all four conditions.
-5. Post a resolution comment (TEMPLATES.md), then close the ticket — and then PROVE
+6. Post a resolution comment (TEMPLATES.md), then close the ticket — and then PROVE
    it closed: re-read the ticket and confirm `state == "closed"`. `glab issue close`
    can fail and say little. Do not report a ticket closed on the strength of having
    run the command; report it closed because you read back "closed". If it will not
    close, say so in your report as the FIRST line — a resolved ticket left open is
    worse than an unresolved one, because it looks finished to everyone but the map.
-   Task tickets that need a human: post the checklist, leave OPEN, do not close.
-6. Files go on a branch: `git switch -c wayfinder/<map>-<iid>-<slug>`, commit there, name
+   Task tickets that need a human: post the checklist, leave OPEN, do not close — and
+   **un-assign yourself**, or it stays in CLAIMED and neither a later round nor the
+   human will see it as available.
+7. Files go on a branch: `git switch -c wayfinder/<map>-<iid>-<slug>`, commit there, name
    the branch on the ticket. NEVER push, merge, or commit to main — a run that dies
    mid-way must strand nothing and touch nothing shared. Branch off the ORIGINAL HEAD,
    not whatever HEAD happens to be — in a shared worktree it may have moved under you.
-7. Do NOT edit the map body. Do NOT close a grilling or prototype ticket.
+8. Do NOT edit the map body. Do NOT close a grilling or prototype ticket.
 
 Report back, in this order:
+- **intake** — `proceed` | `proceed narrowed: <what you dropped>` | `re-scoped: <what
+  changed>` | `already complete: <where it was settled>` | `overtaken: <by what>`.
 - **disposition** — `closed (state read back as closed)` | `left open: <why>` |
   `RESOLVED BUT WOULD NOT CLOSE: <what the close did>`. Never omit this line, and
   never write "closed" from having run the command rather than having read the state.
@@ -99,6 +142,13 @@ Ticket: #<iid> — <title> (<url>)  [DO NOT RESOLVE, DO NOT CLOSE, DO NOT ASSIGN
 Map: #<map>. Destination: <one line>. Standing constraints: <digest>
 Already decided this run: <the calls taken in phase 1 that bear on this ticket>
 Questions already owned by another ticket: <list> — cross-reference, don't re-ask.
+
+INTAKE FIRST (PLAYBOOK.md): before investigating, check whether these questions are
+still live. A question already answered by a decision taken since this ticket was
+written, or by a blocker that closed with an answer, must NOT reach the frontier —
+drop it and say so. The human's session is the scarcest thing this skill spends;
+asking them something already settled spends it twice. If every question is
+overtaken, say so and post no frontier.
 
 If this is a `prototype` ticket, BUILD FIRST: make the cheap, rough artifact the
 ticket asks for (outline, stub, UI/logic sketch — the /prototype skill), commit it
@@ -207,7 +257,7 @@ Stop the phase-1 loop when any of: no TAKEABLE research/task ticket remains; a r
 
 - `glab` prints a multi-config warning **on stdout** — strip to the first `[`/`{` before parsing JSON. Use `--output json`; `-F` is output-*format*, not JSON.
 - **`glab issue list --all` is all *states*, not all *pages*.** Pagination is `-p/--page`, and one call returns at most `--per-page` rows. Any hand-rolled query over a label with more than 100 tickets comes back short **and says nothing about it** — page until a page returns fewer rows than you asked for. `map-frontier.sh` does this for you; prefer it to your own query.
-- Claim: `glab issue update <iid> --assignee <user>`. Comment: `glab issue note <iid> --message "..."` (heredoc for multi-line).
+- Claim: `glab issue update <iid> --assignee <user>`. Release: `glab issue update <iid> --unassign` — required on every branch that leaves a ticket open, since CLAIMED is never retaken. Comment: `glab issue note <iid> --message "..."` (heredoc for multi-line).
 - Close: comment first, then `glab issue close <iid>` — close takes no message. **Then read the state back**: `glab issue view <iid> --output json | jq -r .state` must print `closed`. The command's silence is not proof; this is the positive signal invariant 7 asks for, applied to the one action the whole sweep is measured by.
 - **File: `glab issue create --title "<title>" --label "wayfinder:<type>" --description "<body>"`** — `<type>` is exactly one of `research`, `task`, `grilling`, `prototype`. Body from the new-ticket template in TEMPLATES.md.
 - Children are found by their `Part of: … (#<map>)` body pointer; blocking by a `## Blocked by` list of links in the body. Both are what `scripts/map-frontier.sh` parses.

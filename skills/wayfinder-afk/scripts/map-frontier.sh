@@ -171,6 +171,7 @@ OUT="$(printf '%s' "$CHILDREN" | jq --argjson known "$KNOWN" '
 #    open on purpose and closing it would lose the human's queue.
 CHECK_MAX="${CHECK_MAX:-60}"
 DONE_OPEN='[]'
+HANDED_OFF='[]'
 CHECK_OK=1
 CHECK_SCANNED=0
 CHECK_TRUNC=0
@@ -178,20 +179,30 @@ for ID in $(printf '%s' "$OUT" | jq -r '.[] | select(.state != "closed") | .iid'
   if [ "$CHECK_SCANNED" -ge "$CHECK_MAX" ]; then CHECK_TRUNC=1; break; fi
   NOTES="$(glab api "projects/:fullpath/issues/$ID/notes?per_page=100" 2>/dev/null | strip || true)"
   # Oniguruma anchors ^ per line by default, so no flag is needed here.
+  # HUMAN wins over RESOLVED deliberately: a ticket flagged for a person must never
+  # be reported as an unclosed close, whatever else was posted to it.
   V="$(printf '%s' "$NOTES" | jq -r '
         if type != "array" then "ERR" else
           [ .[] | select(.system != true) | .body // "" ] as $b
-          | if   ([ $b[] | test("^#+ *Needs a human") ] | any) then "HUMAN"
-            elif ([ $b[] | test("^#+ *Answer\\b")     ] | any) then "RESOLVED"
+          | if   ([ $b[] | test("^#+ *(Needs a human|Changed since this was filed)") ] | any) then "HUMAN"
+            elif ([ $b[] | test("^#+ *Answer\\b") ] | any) then "RESOLVED"
             else "NEITHER" end
         end' 2>/dev/null || true)"
   case "$V" in
     RESOLVED) DONE_OPEN="$(printf '%s' "$DONE_OPEN" | jq --argjson id "$ID" '. + [$id]')" ;;
-    HUMAN|NEITHER) ;;
+    HUMAN)    HANDED_OFF="$(printf '%s' "$HANDED_OFF" | jq --argjson id "$ID" '. + [$id]')" ;;
+    NEITHER)  ;;
     *) CHECK_OK=0 ;;   # empty or ERR: the fetch failed, not "nothing found"
   esac
   CHECK_SCANNED=$(( CHECK_SCANNED + 1 ))
 done
+
+# A ticket handed to someone else — re-scoped, or left as a human checklist — that
+# is still ASSIGNED is stranded for the same reason a failed close is: CLAIMED is
+# never retaken, so it is offered to nobody. The agent that handed it off owed it
+# an un-assign.
+STALE_CLAIMS="$(printf '%s' "$OUT" | jq --argjson ids "$HANDED_OFF" \
+  '[ .[] | select(.state != "closed" and .claimed and (.iid as $i | $ids | index($i))) ]')"
 
 completion_report() {
   local n
@@ -213,6 +224,14 @@ completion_report() {
   fi
   if [ "$n" -gt 0 ] && [ "$CHECK_OK" = "0" ]; then
     printf '\n  (a notes fetch also failed — there may be more)\n'
+  fi
+  if [ "$(printf '%s' "$STALE_CLAIMS" | jq 'length')" -gt 0 ]; then
+    printf '%s' "$STALE_CLAIMS" | jq -r '
+      "STALE CLAIM — \(length) ticket(s) handed off but still assigned\n"
+      + "  Re-scoped, or left as a checklist for the human, and never un-assigned. They\n"
+      + "  sit in CLAIMED, which no round retakes, so they are offered to nobody:\n"
+      + "  glab issue update <iid> --unassign\n"
+      + (map("  #\(.iid) [\(.type)] \(.title) — held by \(.assignee)") | join("\n"))'
   fi
 }
 

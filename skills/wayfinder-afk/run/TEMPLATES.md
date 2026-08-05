@@ -60,6 +60,40 @@ Both parsed shapes are exact. The `Part of:` URL must end in `work_items/<map>` 
 
 Omit `## Blocked by` entirely when nothing blocks it — an empty section reads as unparsed, not as unblocked.
 
+## Intake — already complete
+
+Posted instead of a resolution when the intake check finds the work already done. Then close and read the state back. Short on purpose: the answer lives where it was settled, and duplicating it here creates a second copy to keep true.
+
+```markdown
+## Already settled
+
+Settled by <[ticket name](url) | the decision "<…>" on the map | commit `<sha>` on `<branch>` | the human's answer on [<ticket name>](url)>, <when>.
+
+<one line: the answer, as it now stands>
+
+Nothing in this ticket is outstanding. Closing without re-doing the work.
+
+<!-- wayfinder:agent -->
+```
+
+## Intake — the path changed
+
+Posted when the premise has moved. Two uses: by a subagent re-scoping the ticket it holds, and by the **lead**, onto a ticket some *other* subagent's finding has invalidated. The lead's version is what makes the next round's intake check work — an invalidation that stays in a report is invisible to the agent who needs it.
+
+Leave the ticket **open and unclaimed** unless nothing is left to do, in which case close it as overtaken.
+
+```markdown
+## Changed since this was filed
+
+**What changed:** <the amended constraint, the decision, what the blocker actually concluded, the code that moved> — from <[ticket name](url) | the map's Decisions so far | `<file>`>.
+
+**What that voids here:** <the specific part of this ticket that no longer holds>
+
+**What is still live:** <the remainder, stated as the ticket should now ask it — or "nothing", and close as overtaken>
+
+<!-- wayfinder:agent -->
+```
+
 ## Task ticket that turned out to need the human
 
 Post this, leave the ticket **open** and **unassigned**. A bare list of steps is the fallback — if the steps can be collapsed into one command, build the probe and lead with it.
