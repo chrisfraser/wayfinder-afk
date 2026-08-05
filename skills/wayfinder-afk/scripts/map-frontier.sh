@@ -6,6 +6,11 @@
 # CLOSED. Children are found by their "Part of: ... (#<map>)" body pointer;
 # blocking is read from the "## Blocked by" section of each body.
 #
+# Also reports COMPLETE BUT OPEN: open tickets already carrying an agent
+# resolution comment. The work was done and the close never landed — and because
+# the subagent claims a ticket before starting, such a ticket sits in CLAIMED,
+# which no round retakes. It is invisible until someone reads the map by hand.
+#
 # Also reports UNLABELLED: issues that point at this map but carry no
 # "wayfinder:*" label. Step 1 finds children by QUERYING the four labels, so
 # such a ticket is invisible to it — in no bucket, never swept, never blocking
@@ -152,6 +157,65 @@ OUT="$(printf '%s' "$CHILDREN" | jq --argjson known "$KNOWN" '
                else "TAKEABLE" end)
     })')"
 
+# 5. completion check. An open ticket already carrying an agent resolution comment
+#    is work that was DONE and then not closed — the `glab issue close` never
+#    landed, or the subagent stopped after commenting.
+#
+#    This is self-concealing without the check. The subagent claims the ticket
+#    before starting, so a failed close leaves it assigned-and-open: bucket
+#    CLAIMED, excluded from TAKEABLE, skipped by every later round. It looks like
+#    someone is on it, forever. Nothing else in the run contradicts that, because
+#    the lead's "closed" count comes from what subagents reported, not the tracker.
+#
+#    Deliberately does NOT flag a "Needs a human — checklist" ticket: that one is
+#    open on purpose and closing it would lose the human's queue.
+CHECK_MAX="${CHECK_MAX:-60}"
+DONE_OPEN='[]'
+CHECK_OK=1
+CHECK_SCANNED=0
+CHECK_TRUNC=0
+for ID in $(printf '%s' "$OUT" | jq -r '.[] | select(.state != "closed") | .iid'); do
+  if [ "$CHECK_SCANNED" -ge "$CHECK_MAX" ]; then CHECK_TRUNC=1; break; fi
+  NOTES="$(glab api "projects/:fullpath/issues/$ID/notes?per_page=100" 2>/dev/null | strip || true)"
+  # Oniguruma anchors ^ per line by default, so no flag is needed here.
+  V="$(printf '%s' "$NOTES" | jq -r '
+        if type != "array" then "ERR" else
+          [ .[] | select(.system != true) | .body // "" ] as $b
+          | if   ([ $b[] | test("^#+ *Needs a human") ] | any) then "HUMAN"
+            elif ([ $b[] | test("^#+ *Answer\\b")     ] | any) then "RESOLVED"
+            else "NEITHER" end
+        end' 2>/dev/null || true)"
+  case "$V" in
+    RESOLVED) DONE_OPEN="$(printf '%s' "$DONE_OPEN" | jq --argjson id "$ID" '. + [$id]')" ;;
+    HUMAN|NEITHER) ;;
+    *) CHECK_OK=0 ;;   # empty or ERR: the fetch failed, not "nothing found"
+  esac
+  CHECK_SCANNED=$(( CHECK_SCANNED + 1 ))
+done
+
+completion_report() {
+  local n
+  n="$(printf '%s' "$DONE_OPEN" | jq 'length')"
+  if [ "$n" -gt 0 ]; then
+    printf '%s' "$OUT" | jq -r --argjson ids "$DONE_OPEN" '
+      "COMPLETE BUT OPEN — \($ids|length) ticket(s) carry a resolution comment and are still open\n"
+      + "  The work was done; the close never landed. Until it does they sit in CLAIMED,\n"
+      + "  which no round retakes — they are skipped forever. Read each, then:\n"
+      + "  glab issue close <iid>\n"
+      + (map(select(.iid as $i | $ids | index($i))) | map("  #\(.iid) [\(.type)] \(.title)\n        \(.url)") | join("\n"))'
+  elif [ "$CHECK_OK" = "0" ]; then
+    printf 'COMPLETE BUT OPEN — CHECK INCOMPLETE (a notes fetch failed). Not ruled out.\n'
+  elif [ "$CHECK_TRUNC" = "1" ]; then
+    printf 'COMPLETE BUT OPEN — none in the first %s open ticket(s), but CHECK_MAX=%s stopped\n' "$CHECK_SCANNED" "$CHECK_MAX"
+    printf '                    the check before the rest. Not ruled out.\n'
+  else
+    printf 'COMPLETE BUT OPEN — none, across all %s open ticket(s) checked\n' "$CHECK_SCANNED"
+  fi
+  if [ "$n" -gt 0 ] && [ "$CHECK_OK" = "0" ]; then
+    printf '\n  (a notes fetch also failed — there may be more)\n'
+  fi
+}
+
 # Coverage of step 1. A frontier built from a short read is WRONG, not merely
 # small — the missing tickets are absent from every bucket, so nothing above
 # hints they exist. Say so loudly, or a partial sweep reads as a finished one.
@@ -198,6 +262,7 @@ orphan_report() {
 if [ "$JSON" = "1" ]; then
   printf '%s\n' "$OUT"
   coverage_report >&2
+  completion_report >&2
   orphan_report >&2
   exit 0
 fi
@@ -218,4 +283,5 @@ printf '%s' "$OUT" | jq -r --arg map "$MAP" '
 '
 printf '\n'
 coverage_report
+completion_report
 orphan_report

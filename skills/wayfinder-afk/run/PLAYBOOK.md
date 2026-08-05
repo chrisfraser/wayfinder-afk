@@ -63,8 +63,13 @@ Tracker: read docs/agents/issue-tracker.md for the exact CLI.
    defend; escalate the rest into your report. Never stall. Apply the ticket test
    before proposing ANY new ticket — answer it here, fold it into a frontier, or
    make it fog, in that order, and file only what survives all four conditions.
-5. Post a resolution comment (TEMPLATES.md), then close the ticket. Task tickets that
-   need a human: post the checklist, leave OPEN, do not close.
+5. Post a resolution comment (TEMPLATES.md), then close the ticket — and then PROVE
+   it closed: re-read the ticket and confirm `state == "closed"`. `glab issue close`
+   can fail and say little. Do not report a ticket closed on the strength of having
+   run the command; report it closed because you read back "closed". If it will not
+   close, say so in your report as the FIRST line — a resolved ticket left open is
+   worse than an unresolved one, because it looks finished to everyone but the map.
+   Task tickets that need a human: post the checklist, leave OPEN, do not close.
 6. Files go on a branch: `git switch -c wayfinder/<map>-<iid>-<slug>`, commit there, name
    the branch on the ticket. NEVER push, merge, or commit to main — a run that dies
    mid-way must strand nothing and touch nothing shared. Branch off the ORIGINAL HEAD,
@@ -72,6 +77,9 @@ Tracker: read docs/agents/issue-tracker.md for the exact CLI.
 7. Do NOT edit the map body. Do NOT close a grilling or prototype ticket.
 
 Report back, in this order:
+- **disposition** — `closed (state read back as closed)` | `left open: <why>` |
+  `RESOLVED BUT WOULD NOT CLOSE: <what the close did>`. Never omit this line, and
+  never write "closed" from having run the command rather than having read the state.
 - one-line gist of the answer (this becomes the map's Decisions-so-far entry)
 - calls you took, each with confidence + reversal cost
 - escalations for the lead, each with your leaning
@@ -200,11 +208,12 @@ Stop the phase-1 loop when any of: no TAKEABLE research/task ticket remains; a r
 - `glab` prints a multi-config warning **on stdout** — strip to the first `[`/`{` before parsing JSON. Use `--output json`; `-F` is output-*format*, not JSON.
 - **`glab issue list --all` is all *states*, not all *pages*.** Pagination is `-p/--page`, and one call returns at most `--per-page` rows. Any hand-rolled query over a label with more than 100 tickets comes back short **and says nothing about it** — page until a page returns fewer rows than you asked for. `map-frontier.sh` does this for you; prefer it to your own query.
 - Claim: `glab issue update <iid> --assignee <user>`. Comment: `glab issue note <iid> --message "..."` (heredoc for multi-line).
-- Close: comment first, then `glab issue close <iid>` — close takes no message.
+- Close: comment first, then `glab issue close <iid>` — close takes no message. **Then read the state back**: `glab issue view <iid> --output json | jq -r .state` must print `closed`. The command's silence is not proof; this is the positive signal invariant 7 asks for, applied to the one action the whole sweep is measured by.
 - **File: `glab issue create --title "<title>" --label "wayfinder:<type>" --description "<body>"`** — `<type>` is exactly one of `research`, `task`, `grilling`, `prototype`. Body from the new-ticket template in TEMPLATES.md.
 - Children are found by their `Part of: … (#<map>)` body pointer; blocking by a `## Blocked by` list of links in the body. Both are what `scripts/map-frontier.sh` parses.
 - **A ticket filed without its `wayfinder:<type>` label does not exist.** `map-frontier.sh` builds the frontier by *querying those four labels* — an unlabelled ticket is in no bucket, is never swept, never blocks anything, and never appears in a handover. Same for a missing `Part of:` pointer: correctly labelled, but attached to no map.
 - `map-frontier.sh` also prints a **COVERAGE** line, and it governs whether the buckets can be trusted at all: `complete` (every label query read to exhaustion), `TRUNCATED` (hit the `PAGE_CAP` page cap, default 50 pages = 5000 tickets per label — re-run with `PAGE_CAP` higher), or `QUERY FAILED`. On either of the latter two the missing tickets are absent from **every** bucket, so a short read looks exactly like a small map. Don't sweep on a frontier that isn't `complete`.
+- **COMPLETE BUT OPEN** is the section to read first, every round. It lists open tickets that already carry a resolution comment — work that was done and never closed. These are free closes, and they do not surface any other way: the subagent claimed the ticket before starting, so a failed close leaves it in CLAIMED, which no round retakes. Same three outcomes as below, and `CHECK INCOMPLETE` is not `none`. A ticket holding a "Needs a human — checklist" is deliberately open and is never flagged.
 - `map-frontier.sh` catches the first case itself: its **UNLABELLED** section lists open issues pointing at this map that carry no `wayfinder:*` label. Read it every round and fix what it names (`glab issue update <iid> --label "wayfinder:<type>"`) before taking anything. It reports one of three things and they are not interchangeable — a list, `none, across <n> ... scanned`, or `SCAN FAILED`. **`SCAN FAILED` is not "none"**; it means the check didn't run and orphans are still possible. The scan covers open issues only, newest first, capped at `ORPHAN_MAX` (default 500) — raise it on a big project.
 - When a blocker closes, strike it through in the blocked ticket's `## Blocked by` list rather than deleting it, and say what changed.
 - Anything whose *failure* must be seen — builds, tests — is asserted on a positive signal (`BUILD SUCCESSFUL`, a parsed result file), never on the absence of errors, and is run with any output filter bypassed (`rtk proxy <cmd>`, if that's the filter).

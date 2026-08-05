@@ -91,7 +91,10 @@ The human answered these in a guided session. Their answers, verbatim:
 1. Post ONE "Settled" comment (TEMPLATES.md) restating each question and their answer in
    the ticket's own words, carrying their reasoning. Add no reasoning of your own, and do
    not argue with an answer that went against the recommendation.
-2. Every question answered or deferred → close the ticket. Otherwise post a round <n+1>
+2. Every question answered or deferred → close the ticket, then read the state back and
+   confirm it says `closed`. Report which it was. A ticket left resolved-but-open looks
+   finished to everyone except the map, and no later round retakes it.
+   Otherwise post a round <n+1>
    frontier: what is unanswered, what their answers unlocked, what is newly askable.
 3. Post the applied marker naming what you consumed.
 4. Do NOT edit the map body. Do NOT invent an answer to anything left unread.
@@ -111,7 +114,8 @@ human has to come back for.
 
 - Notes: `glab api "projects/:fullpath/issues/<iid>/notes?per_page=100&sort=asc&order_by=created_at"`. `glab` prints a multi-config warning **on stdout** — strip to the first `[`/`{`. `--output json`, never `-F json`.
 - `"system": true` notes are GitLab's own cross-reference chatter — always filtered.
-- Comment: `glab issue note <iid> --message "..."`. Close: comment first, then `glab issue close <iid>` — close takes no message.
+- Comment: `glab issue note <iid> --message "..."`. Close: comment first, then `glab issue close <iid>` — close takes no message. **Read the state back** (`glab issue view <iid> --output json | jq -r .state` → `closed`); the command's silence proves nothing.
+- `map-frontier.sh` prints **COMPLETE BUT OPEN** — open tickets already carrying a resolution comment, i.e. closes that never landed. Check it at the start of a session and finish those closes; they are the cheapest thing on the map.
 - **File: `glab issue create --title "<title>" --label "wayfinder:<type>" --description "<body>"`** — `<type>` is exactly one of `research`, `task`, `grilling`, `prototype`. The body opens with `Part of: [<map title>](<map url>)` and, if anything blocks it, a `## Blocked by` list whose rows each carry a literal `#<iid>` next to the ticket's name.
 - **A ticket filed without its `wayfinder:<type>` label does not exist.** `map-frontier.sh` finds children by *querying those four labels* — unlabelled, it is in no bucket and no later run or collect will ever see it; without the `Part of:` pointer it is labelled but attached to no map.
 - Child discovery and blockers: `bash scripts/map-frontier.sh <map> --json`. Shell out; don't duplicate the query.
