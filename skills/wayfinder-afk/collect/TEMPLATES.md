@@ -259,6 +259,7 @@ Ratified calls **move** here; the review-queue entry is deleted, not left behind
 **Ratified (<n>) / declined (<n>)** — <the declines, one line each>
 **Answered (<n>) · deferred (<n>) · unread (<n>)**
 **Bench** — <n> run, <n> moot, <n> blocked: <what and why>
+**Landing MR** — !<id>: <reviewed and merged by the lead | review started, <their asks> | still awaiting review — lands only after>
 **Checklists** — <n> closed from report-backs, <n> walked live, <n> still open: <what's missing>
 **Closed (<n>)** — <ticket name> · <ticket name>
 **Round <n+1> posted (<n>)** — <ticket name>: <n> carried, <n> new

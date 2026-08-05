@@ -74,6 +74,8 @@ Most of it is already banked. Finish the map body, close what is fully answered,
 
 Anything the session built — an inline probe, a rewritten verdict mapping — is committed to the bench branch and pushed; the session ends with the tree clean and every device lease released, same as a run.
 
+**The landing MR is part of the arrival.** Say where it stands — what's folded in, what a conflict kept out — and offer the review now or later: walk the diff in this session, or leave the MR for them to review in the tracker. Either way it lands only after they've been through it, and the merge is theirs; a session never un-drafts or merges the landing MR, however settled the map looks.
+
 **Then score the arrival.** Walk `## Done when` item by item: met, decided but unbuilt, undecided. If anything is decided-but-unbuilt and the Notes don't authorize building, ask now — the human is in the room: one picker, "the map is fully decided on <items> — authorize the build?" On yes, the lead amends Notes to say so and promotes or files the build tickets; the next run sweeps them. If **every** item is met, propose closing the map itself — same picker, their call. Report leads with the arrival score and the net, then everything else; if anything is now TAKEABLE, offer `/wayfinder-afk <map>` rather than sweeping here.
 
 ## Standing rules
