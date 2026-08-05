@@ -23,6 +23,27 @@ Escalating never stops the run. Write it to the map's review queue, note it on t
 
 Every taken call carries, on the ticket and in one line on the map: the call, confidence (high/medium), the evidence, **what would falsify it**, and **what reversing it costs**. Medium-confidence calls are still taken — flagged, not withheld.
 
+## The ticket test
+
+Applied before filing anything, by every subagent and by the lead. Closing work is the job. Filing is the exception, and it has to earn itself — **the default is don't file**.
+
+**File a new ticket** only when *all* hold:
+
+- Someone who wasn't in this run could take it cold, from the body alone.
+- It blocks something on this map, or the destination cannot be reached without it.
+- It cannot be answered inside the ticket you are already holding, at the cost of finishing that ticket.
+- No open ticket on this map already covers it.
+
+**Otherwise**, in this order:
+
+1. **Answer it now.** A question you could settle with ten more minutes of the ticket already in your hands is not a new ticket — it is the rest of the one you took.
+2. **Fold it into an open frontier.** Anything needing the human becomes a numbered question on an existing `grilling` ticket for that area, never a new ticket. Frontiers are built to carry many questions; the round costs nothing extra to answer.
+3. **Write it as fog.** Something you now know you don't know, but cannot yet specify, is a line of fog on the map. Fog is free. A ticket is not.
+
+The asymmetry that makes this matter: a run can only ever **close** `research` and `task`. Every `grilling` or `prototype` ticket it files is one no run can retire — it waits for the human to sit down. Filing one to record a thought is exactly how a map silts up, and the cost lands on the person the skill exists to protect.
+
+"None" is a good answer. Reaching for a ticket to fill a report field is not.
+
 ## Subagent brief — AFK ticket (`research` / `task`)
 
 Give each subagent everything it needs to run without asking; it cannot see this conversation.
@@ -39,7 +60,9 @@ Tracker: read docs/agents/issue-tracker.md for the exact CLI.
    itself — never a secondary write-up. Task: do the work; if it needs hardware,
    credentials, money, or a human hand, STOP and produce a checklist instead.
 4. Apply the decision test (PLAYBOOK.md) to every sub-question. Take what you can
-   defend; escalate the rest into your report. Never stall.
+   defend; escalate the rest into your report. Never stall. Apply the ticket test
+   before proposing ANY new ticket — answer it here, fold it into a frontier, or
+   make it fog, in that order, and file only what survives all four conditions.
 5. Post a resolution comment (TEMPLATES.md), then close the ticket. Task tickets that
    need a human: post the checklist, leave OPEN, do not close.
 6. Files go on a branch: `git switch -c wayfinder/<map>-<iid>-<slug>`, commit there, name
@@ -52,8 +75,12 @@ Report back, in this order:
 - one-line gist of the answer (this becomes the map's Decisions-so-far entry)
 - calls you took, each with confidence + reversal cost
 - escalations for the lead, each with your leaning
-- new tickets the answer makes specifiable: title, type, body, what blocks them
-- fog cleared or newly visible
+- questions for the human this raised — to be folded into an existing frontier as
+  numbered questions. This is the default home for anything needing a decision.
+- new tickets, ONLY those passing the ticket test in PLAYBOOK.md: title, type, body,
+  what blocks them. Most tickets should yield none — "none" is the expected answer,
+  and is worth more than one filed to fill this line.
+- fog cleared or newly visible — the home for what you now know you don't know
 - anything that invalidates another ticket on this map
 ```
 
@@ -162,7 +189,9 @@ Report back:
 
 ## Loop guards
 
-Stop the phase-1 loop when any of: no TAKEABLE research/task ticket remains; a round closes nothing new (fixpoint); 4 rounds have run. Say which fired. New tickets created during a round are candidates for the *next* round, not this one.
+Stop the phase-1 loop when any of: no TAKEABLE research/task ticket remains; a round closes nothing new (fixpoint); **two consecutive rounds end net-positive**; 4 rounds have run. Say which fired. New tickets created during a round are candidates for the *next* round, not this one.
+
+**The net guard.** Count every round: closed, filed, net. A round that files more than it closes makes the next round **closing-only** — it may file nothing, and candidates wait in `## Candidate tickets` on the map body until a round runs net-negative again. This exists because the other three guards are blind to inflation: new tickets defer to the next round, so filing work *postpones* the "no TAKEABLE remains" stop, and a round closing 3 while opening 9 satisfies every other condition. A map that grows two rounds running is a finding — report it as one.
 
 ## Tracker crib (GitLab / `glab`)
 

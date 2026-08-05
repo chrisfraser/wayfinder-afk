@@ -96,8 +96,15 @@ The human answered these in a guided session. Their answers, verbatim:
 3. Post the applied marker naming what you consumed.
 4. Do NOT edit the map body. Do NOT invent an answer to anything left unread.
 
-Report back: what you settled, what you carried forward, new tickets their answers make
-specifiable, and anything they said that bears on a DIFFERENT ticket on this map.
+Report back: what you settled, what you carried forward, and anything they said that
+bears on a DIFFERENT ticket on this map.
+
+New tickets only if a proposal clears all four: takeable cold by someone who wasn't
+here; blocking something on this map; not answerable inside the ticket you are in;
+not already covered by an open ticket. Otherwise fold it into a round n+1 frontier
+as a numbered question, or write it as fog. "None" is the expected answer — a
+collect session exists to shrink the map, and every ticket filed here is one the
+human has to come back for.
 ```
 
 ## Tracker crib (GitLab / `glab`)

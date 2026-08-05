@@ -161,6 +161,18 @@ One section on the map body, added by the run, cleared by the lead when they've 
 `bench/<map>/RUN.md` on `wayfinder/<map>-bench` — <n> probes, ~<n> min, ordered so each radio is picked up once.
 ```
 
+## Map — candidate tickets
+
+Where a proposal goes when it did not pass the ticket test, or when a closing-only round refused it. Nothing is lost; nothing inflates the frontier. The lead promotes from here when a round runs net-negative, and a candidate no one has promoted in two runs should be deleted rather than carried — that is the list doing its job.
+
+```markdown
+## Candidate tickets
+
+<!-- proposed, not filed. Promote only in a net-negative round; delete what nobody misses. -->
+
+- **<title>** (<type>) — <one line: what it would be>. Raised by [<ticket name>](url), round <n>. Held because: <which ticket-test condition it failed, or "closing-only round">.
+```
+
 ## Probe — file header
 
 First lines of every probe, whatever the language. The human reads this before they trust it with a radio.
@@ -216,11 +228,16 @@ A failed **precondition** prints `PRECONDITION:` and exits non-zero — that is 
 ```markdown
 ## Unattended run — <what was swept>
 
+**Net <±n>** — closed <n>, filed <n>. <n> tickets open on this map, was <n>.
+<per-round if it took more than one: `r1 −3 · r2 −1 · r3 +2 (closing-only imposed)`>
+
 **Closed (<n>)** — <ticket name> · <ticket name>
 **Calls taken (<n>)** — see the review queue on the map body
 **Blocked on you (<n>)** — <ticket name>: <one line> · …
 **Grilling frontiers ready (<n>)** — <ticket name>: <n> questions · …
-**New tickets (<n>)** — <ticket name> (<type>, blocked by <…>)
+**New tickets (<n>)** — <ticket name> (<type>, blocked by <…>) — <why the ticket test passed>
+**Questions folded into existing frontiers (<n>)** — onto <ticket name>: <n> · …
+**Held as candidates (<n>)** — not filed; on the map body under Candidate tickets
 **Branches (<n>, unpushed)** — `wayfinder/<map>-<iid>-<slug>` — <what's on it>
 **Bench kit** — `bench/<map>/RUN.md` on `wayfinder/<map>-bench`: <n> probes settling <n> of the <n> open questions, ~<n> min at the bench. Start with `bash bench/<map>/run-all.sh`. <n> questions are judgement-only. <n> probes are compiled but never run.
 **Fog graduated / newly visible** — <one line>

@@ -1,6 +1,6 @@
 # Run mode — `/wayfinder-afk <map>`
 
-Work a wayfinder map unattended. Three jobs, in order: **clear everything that doesn't need the human**; **frame what's left so it can be answered in bulk**; **build the rig that makes answering it a one-command verdict**. The measure of a run is how short the human's session at the bench is afterwards.
+Work a wayfinder map unattended. Three jobs, in order: **clear everything that doesn't need the human**; **frame what's left so it can be answered in bulk**; **build the rig that makes answering it a one-command verdict**. The measure of a run is how short the human's session at the bench is afterwards — and a map that ends the run bigger than it started has usually failed that test, whatever else it produced.
 
 Read the `/wayfinder` skill's `SKILL.md` once at the start if you haven't — this mode inherits its vocabulary and overrides exactly two things.
 
@@ -28,8 +28,9 @@ Each **round**:
 1. Recompute the frontier. Take every TAKEABLE `research` ticket and every TAKEABLE `task` ticket that has no human-only step. Read the **UNLABELLED** section first and label anything it names — those tickets are attached to this map but in no bucket, so the round is working from an incomplete picture until they're fixed.
 2. Launch one subagent per ticket, all in one message. Each claims its ticket **before** any work.
 3. A `task` ticket needing hardware, credentials, money, or a human hand is **not** AFK: the subagent leaves a precise do-this checklist on the ticket, leaves it open, and reports it as blocked on the human.
-4. Collect results. Only the lead touches the map: append closed tickets to Decisions so far, graduate fog, create-then-wire any new tickets the subagents proposed — **each filed with its `wayfinder:<type>` label and a `Part of:` pointer at this map, or the next round's frontier will not see it** (TEMPLATES.md, and the crib in PLAYBOOK.md) — and add escalations to the review queue.
-5. Loop. Stop when no TAKEABLE research/task ticket remains, when a round closes nothing new, or after 4 rounds — then say which and why.
+4. Collect results. Only the lead touches the map: append closed tickets to Decisions so far, graduate fog, add escalations to the review queue, and route every proposed new ticket through the **ticket test** ([PLAYBOOK.md](PLAYBOOK.md)) — the lead is the second gate, and rejects here are normal. Questions for the human become numbered questions on an existing frontier, not tickets. What survives is created-then-wired, **each filed with its `wayfinder:<type>` label and a `Part of:` pointer at this map, or the next round's frontier will not see it** (TEMPLATES.md, and the crib in PLAYBOOK.md).
+5. Count the round: closed, filed, **net**. Say it out loud each round.
+6. Loop. Stop when no TAKEABLE research/task ticket remains, when a round closes nothing new, or after 4 rounds — then say which and why. If a round ends **net-positive** (filed more than it closed), the next round is **closing-only**: no new tickets at all, candidates held in the map's `## Candidate tickets` list. Two net-positive rounds in a row stops the loop — the map is growing faster than the run can clear it, and that is a finding for the lead, not a reason for a fifth round.
 
 ## Phase 2 — Grilling frontier pass
 
@@ -53,7 +54,7 @@ Then amend the frontiers already posted — each question gains a `Settled by:` 
 
 ## Phase 4 — Handover
 
-Post a run report on the map and print the same, tighter, to the terminal: what closed, what calls were taken (ratify list), what is blocked on the human, where each grilling frontier stands, and the one command that starts the bench session.
+Post a run report on the map and print the same, tighter, to the terminal: the **net** ticket count first (closed, filed, and what the map now stands at), then what closed, what calls were taken (ratify list), what is blocked on the human, where each grilling frontier stands, and the one command that starts the bench session. A run that left the map bigger than it found it says so in its first line — that is the number the lead is entitled to see without asking.
 
 Everything durable lives on the tracker, so a lost session costs nothing: the frontiers, the review queue and the report are all server-side, and `bash scripts/map-frontier.sh <map>` rebuilds the picture in one command. Say so, and name the branches — they're local and unpushed, and nothing but the tickets points at them. When the answers come back, `/wayfinder-afk collect <map>` applies them; **every comment this run posts carries the `<!-- wayfinder:agent -->` stamp** so collect can tell them from the human's replies.
 
