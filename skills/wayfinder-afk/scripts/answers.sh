@@ -79,7 +79,6 @@ fetch_notes() {                            # $1 = iid; result in $NOTES_JSON
 CLASSIFY='
   def is_frontier: (.body // "") | test("^#+ *Frontier — round");
   def is_marker:   (.body // "") | test("wayfinder-(afk|collect): applied");
-  def is_settled:  (.body // "") | test("^#+ *Settled —");
   def is_agent:    (.body // "")
     | test("<!-- *wayfinder:agent")
       or test("^#+ *(Frontier — round|Settled —|Answer\\b|Needs a human|Unattended run|Correction\\b|Supplementary\\b)")
@@ -111,7 +110,13 @@ for IID in $MAP $TARGETS; do
     ($meta.iid) as $iid
     | (map(select(is_frontier)) | last) as $frontier
     | (map(select(is_marker))) as $markers
-    | ([ $markers[] | (.body | [ scan("#?([0-9]{6,})") | .[0] ]) ] | flatten) as $consumed
+    # Ids come from the "consumed notes <id>,<id>" clause of the marker, never
+    # scanned loose from the body: a bare digit scan eats "round 2", and the old
+    # 6-digit floor missed every id on a young self-hosted GitLab, so consumed
+    # notes came back as uncollected.
+    | ([ $markers[] | (.body
+         | (capture("consumed notes (?<ids>[0-9][0-9, ]*)") | .ids) // ""
+         | [ scan("[0-9]+") ]) ] | flatten) as $consumed
     | {
         iid: $iid, title: $meta.title, type: $meta.type, state: $meta.state, url: $meta.url,
         notes_fetch: $fetch,
@@ -183,11 +188,14 @@ printf '\n%s\n' "===============================================================
 if [ -d "$BENCH" ]; then
   printf 'bench kit — %s\n' "$BENCH"
   [ -r "$BENCH/RUN.md" ] && printf '  RUN.md present (session plan)\n'
-  for P in "$BENCH"/probe-*.sh "$BENCH"/probe-*; do
-    [ -r "$P" ] || continue
+  # One glob — probe-* already covers probe-*.sh, and two listed every shell
+  # probe twice. -E because BSD sed has no BRE \| alternation: the GNU-ism
+  # matched nothing on macOS and the headers silently vanished.
+  for P in "$BENCH"/probe-*; do
+    [ -f "$P" ] || continue
     case "$P" in *'*'*) continue;; esac
     printf '  %s\n' "$(basename "$P")"
-    sed -n '2,12p' "$P" | sed -n 's/^# \(Settles\|Needs\|Gesture\|Safety\|Status\|Blind to\): */      \1: /p'
+    sed -n '2,12p' "$P" | sed -n -E 's/^# (Settles|Needs|Gesture|Safety|Status|Blind to): */      \1: /p'
   done
 else
   printf 'bench kit — not in this working tree.\n'

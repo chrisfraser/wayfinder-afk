@@ -197,6 +197,7 @@ OUT="$(printf '%s' "$CHILDREN" | jq --argjson known "$KNOWN" '
 #    Deliberately does NOT flag a "Needs a human — checklist" ticket: that one is
 #    open on purpose and closing it would lose the human's queue.
 CHECK_MAX="${CHECK_MAX:-60}"
+CHECK_NOTES_CAP="${CHECK_NOTES_CAP:-30}"   # 30 pages x 100 = 3000 notes per ticket
 DONE_OPEN='[]'
 HANDED_OFF='[]'
 NO_TRACE='[]'
@@ -208,18 +209,34 @@ CHECK_TRUNC=0
 # the fresh wreckage is.
 for ID in $(printf '%s' "$OUT" | jq -r '[ .[] | select(.state != "closed") | .iid ] | sort | reverse | .[]'); do
   if [ "$CHECK_SCANNED" -ge "$CHECK_MAX" ]; then CHECK_TRUNC=1; break; fi
-  NOTES="$(glab api "projects/:fullpath/issues/$ID/notes?per_page=100&sort=asc&order_by=created_at" 2>/dev/null | strip || true)"
-  # Oniguruma anchors ^ per line by default, so no flag is needed here.
+  # Paged to exhaustion, like answers.sh on the same endpoint. One ASC page serves
+  # the OLD end, so past 100 notes `last` would crown note #100 "the most recent
+  # word" — exactly the blind spot the recency rule below exists to close.
+  fetch_pages "projects/:fullpath/issues/$ID/notes?sort=asc&order_by=created_at" "$CHECK_NOTES_CAP"
+  CHECK_SCANNED=$(( CHECK_SCANNED + 1 ))
+  if [ "$FETCH_OK" = "0" ] || [ "$FETCH_TRUNCATED" = "1" ]; then
+    # Failed or cut short: the latest note may be the missing one, and recency is
+    # the whole signal — this ticket is unclassifiable, not "NEITHER".
+    CHECK_OK=0
+    continue
+  fi
+  # jq/Oniguruma anchors ^ to the START OF THE STRING, not the line (answers.sh
+  # documents the same trap) — so headings match at the body's first byte or
+  # after an explicit newline, never mid-line.
   # The LATEST classifiable note wins. "HUMAN always outranks RESOLVED" looked
   # safer but had a blind spot: an early checklist followed by a later resolution
   # (the human did their part, the agent resolved, the close failed) was never
   # flagged. Recency is the honest signal — the notes are fetched oldest-first,
   # so `last` is the most recent word on the ticket.
-  V="$(printf '%s' "$NOTES" | jq -r '
+  # A frontier classifies as HUMAN: a ticket whose latest word is a frontier is
+  # open ON PURPOSE, waiting on answers. Without that, the Settled comment under
+  # a round n+1 frontier (deferred questions — collect leaves the ticket open by
+  # design) read as RESOLVED and flagged a deliberately open ticket every round.
+  V="$(printf '%s' "$FETCH_RESULT" | jq -r '
         if type != "array" then "ERR" else
           [ .[] | select(.system != true) | .body // ""
-            | if   test("^#+ *(Needs a human|Changed since this was filed)") then "HUMAN"
-              elif test("^#+ *(Answer\\b|Already settled\\b|Settled —)")     then "RESOLVED"
+            | if   test("(^|\\n)#+ *(Needs a human|Changed since this was filed|Frontier — round)") then "HUMAN"
+              elif test("(^|\\n)#+ *(Answer\\b|Already settled\\b|Not needed\\b|Settled —)")        then "RESOLVED"
               else empty end ]
           | last // "NEITHER"
         end' 2>/dev/null || true)"
@@ -227,9 +244,8 @@ for ID in $(printf '%s' "$OUT" | jq -r '[ .[] | select(.state != "closed") | .ii
     RESOLVED) DONE_OPEN="$(printf '%s' "$DONE_OPEN" | jq --argjson id "$ID" '. + [$id]')" ;;
     HUMAN)    HANDED_OFF="$(printf '%s' "$HANDED_OFF" | jq --argjson id "$ID" '. + [$id]')" ;;
     NEITHER)  NO_TRACE="$(printf '%s' "$NO_TRACE" | jq --argjson id "$ID" '. + [$id]')" ;;
-    *) CHECK_OK=0 ;;   # empty or ERR: the fetch failed, not "nothing found"
+    *) CHECK_OK=0 ;;   # empty or ERR: the parse failed, not "nothing found"
   esac
-  CHECK_SCANNED=$(( CHECK_SCANNED + 1 ))
 done
 
 # A ticket handed to someone else — re-scoped, or left as a human checklist — that
@@ -259,7 +275,7 @@ completion_report() {
       + "  glab issue close <iid>\n"
       + (map(select(.iid as $i | $ids | index($i))) | map("  #\(.iid) [\(.type)] \(.title)\n        \(.url)") | join("\n"))'
   elif [ "$CHECK_OK" = "0" ]; then
-    printf 'COMPLETE BUT OPEN — CHECK INCOMPLETE (a notes fetch failed). Not ruled out.\n'
+    printf 'COMPLETE BUT OPEN — CHECK INCOMPLETE (a notes fetch failed or was cut short). Not ruled out.\n'
   elif [ "$CHECK_TRUNC" = "1" ]; then
     printf 'COMPLETE BUT OPEN — none in the first %s open ticket(s), but CHECK_MAX=%s stopped\n' "$CHECK_SCANNED" "$CHECK_MAX"
     printf '                    the check before the rest. Not ruled out.\n'
@@ -267,13 +283,14 @@ completion_report() {
     printf 'COMPLETE BUT OPEN — none, across all %s open ticket(s) checked\n' "$CHECK_SCANNED"
   fi
   if [ "$n" -gt 0 ] && [ "$CHECK_OK" = "0" ]; then
-    printf '\n  (a notes fetch also failed — there may be more)\n'
+    printf '\n  (a notes fetch also failed or was cut short — there may be more)\n'
   fi
   if [ "$(printf '%s' "$STALE_CLAIMS" | jq 'length')" -gt 0 ]; then
     printf '%s' "$STALE_CLAIMS" | jq -r '
       "STALE CLAIM — \(length) ticket(s) handed off but still assigned\n"
-      + "  Re-scoped, or left as a checklist for the human, and never un-assigned. They\n"
-      + "  sit in CLAIMED, which no round retakes, so they are offered to nobody:\n"
+      + "  Re-scoped, left as a checklist, or waiting on frontier answers — and never\n"
+      + "  un-assigned. They sit in CLAIMED, which no round retakes, so they are\n"
+      + "  offered to nobody:\n"
       + "  glab issue update <iid> --unassign\n"
       + (map("  #\(.iid) [\(.type)] \(.title) — held by \(.assignee)") | join("\n"))'
   fi
