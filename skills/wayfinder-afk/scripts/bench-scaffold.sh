@@ -23,9 +23,11 @@ cd "$(dirname "$0")" || exit 1
 verdicts=()
 failed=()
 ran=0
+total=0
 
 for p in probe-*.sh; do
   [ -e "$p" ] || continue
+  total=$((total + 1))
   grep -q '^# Gesture: *yes' "$p" && continue   # needs a human hand; listed in RUN.md instead
   ran=$((ran + 1))
   printf '\n=== %s ===\n' "$p"
@@ -39,6 +41,17 @@ for p in probe-*.sh; do
     verdicts+=("$v")
   fi
 done
+
+# An empty bench must not read as a passed bench: zero probes means nothing was
+# asked, and "nothing asked" exiting 0 is the absence-of-errors trap.
+if [ "$total" -eq 0 ]; then
+  printf 'NO PROBES FOUND in %s — nothing ran, nothing is answered.\n' "$(pwd)"
+  exit 1
+fi
+if [ "$ran" -eq 0 ]; then
+  printf 'All %d probe(s) here need a gesture — nothing to batch-run. Use RUN.md.\n' "$total"
+  exit 0
+fi
 
 printf '\n========== VERDICTS (%d/%d) ==========\n' "${#verdicts[@]}" "$ran"
 [ "${#verdicts[@]}" -gt 0 ] && printf '%s\n' "${verdicts[@]}"

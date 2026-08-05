@@ -44,12 +44,15 @@ If it is done: post a short comment naming where it was settled, close it, read 
 - **Another open ticket** that now covers part of this one.
 - **The code moved** — the file, API or module the ticket names may no longer exist in that shape.
 
-Then take one of four branches, and name which in your report:
+**3. Does the destination still need it?** Read the map's `## Done when`. If finishing this ticket would move no item on it, and nothing on the map is blocked by it, the ticket is effort the map doesn't need — the most expensive waste there is, because it is done *well* and buys nothing. A ticket can be perfectly live by tests 1 and 2 and still fail this one. (No `## Done when` on the map yet? Skip this test and say so — necessity can't be judged against a destination nobody has stated.)
 
-- **Proceed** — the premise holds. The common case; say so in one line and get on with it.
+Then take one of five branches, and name which in your report:
+
+- **Proceed** — the premise holds and the destination needs it. The common case; say so in one line and get on with it.
 - **Proceed narrowed** — part is already settled. Do the rest; say what you dropped and why.
 - **Re-scope** — the premise is void. Do **not** do the work as written. Post what changed and what the ticket should now ask, then **un-assign yourself** (`glab issue update <iid> --unassign`) and report it. A re-scoped ticket is a result, not a failure.
 - **Close as overtaken** — events have left nothing to do. Post why, close, verify.
+- **Close as not needed** — the destination stands without it. Post why (TEMPLATES.md), close, verify, and report it so the lead flags the closure for ratification — pruning wrongly is cheap to reverse, but only if it was said out loud. If you're not sure, that's an escalation with a leaning, not a close.
 
 **Un-assigning is not optional on any branch that leaves the ticket open.** You claimed it at step 1. A ticket left open *and* assigned sits in CLAIMED, which no later round retakes — so a re-scoped ticket you stay assigned to is a ticket nobody will ever pick up. The same applies to a `task` handed to the human: post the checklist, then un-assign, or it is invisible to them too.
 
@@ -72,7 +75,7 @@ Applied before filing anything, by every subagent and by the lead. Closing work 
 2. **Fold it into an open frontier.** Anything needing the human becomes a numbered question on an existing `grilling` ticket for that area, never a new ticket. Frontiers are built to carry many questions; the round costs nothing extra to answer.
 3. **Write it as fog.** Something you now know you don't know, but cannot yet specify, is a line of fog on the map. Fog is free. A ticket is not.
 
-The asymmetry that makes this matter: a run can only ever **close** `research` and `task`. Every `grilling` or `prototype` ticket it files is one no run can retire — it waits for the human to sit down. Filing one to record a thought is exactly how a map silts up, and the cost lands on the person the skill exists to protect.
+The asymmetry that makes this matter: a run **resolves** only `research` and `task`. Every `grilling` or `prototype` ticket it files waits for the human to sit down — retired early only if events overtake every question on it, which is nothing to plan on. Filing one to record a thought is exactly how a map silts up, and the cost lands on the person the skill exists to protect.
 
 "None" is a good answer. Reaching for a ticket to fill a report field is not.
 
@@ -83,6 +86,7 @@ Give each subagent everything it needs to run without asking; it cannot see this
 ```
 Ticket: #<iid> — <title> (<url>)
 Map: #<map> — <map title>. Destination: <one line>.
+Done when: <the map's arrival items verbatim, or "none defined — necessity test suspended">
 Standing constraints (do NOT relitigate): <digest of the map's constraints that bear on this ticket>
 Tracker: read docs/agents/issue-tracker.md for the exact CLI.
 
@@ -91,10 +95,11 @@ Tracker: read docs/agents/issue-tracker.md for the exact CLI.
 3. **INTAKE CHECK (PLAYBOOK.md) — before any work.** Is this already complete? If not,
    has anything changed the path to completeness: an amended constraint, a decision
    taken since, a blocker that closed *with an answer*, another ticket that now covers
-   part of it, code that moved? Take one of the four branches — proceed, proceed
-   narrowed, re-scope, close as overtaken — and name it in your report. The cheapest
-   ticket is the one already done; the most expensive is the one done against a premise
-   that expired.
+   part of it, code that moved? And does the Done-when above still need it at all?
+   Take one of the five branches — proceed, proceed narrowed, re-scope, close as
+   overtaken, close as not needed — and name it in your report. The cheapest ticket
+   is the one already done; the most expensive is the one done well against a premise
+   that expired, or for a destination that stopped needing it.
 4. Resolve it. Research: primary sources only — source, AIDL, official docs, the code
    itself — never a secondary write-up. Task: do the work; if it needs hardware,
    credentials, money, or a human hand, STOP and produce a checklist instead.
@@ -119,7 +124,8 @@ Tracker: read docs/agents/issue-tracker.md for the exact CLI.
 
 Report back, in this order:
 - **intake** — `proceed` | `proceed narrowed: <what you dropped>` | `re-scoped: <what
-  changed>` | `already complete: <where it was settled>` | `overtaken: <by what>`.
+  changed>` | `already complete: <where it was settled>` | `overtaken: <by what>` |
+  `not needed: <which Done-when items it fails to serve>`.
 - **disposition** — `closed (state read back as closed)` | `left open: <why>` |
   `RESOLVED BUT WOULD NOT CLOSE: <what the close did>`. Never omit this line, and
   never write "closed" from having run the command rather than having read the state.
@@ -146,9 +152,13 @@ Questions already owned by another ticket: <list> — cross-reference, don't re-
 INTAKE FIRST (PLAYBOOK.md): before investigating, check whether these questions are
 still live. A question already answered by a decision taken since this ticket was
 written, or by a blocker that closed with an answer, must NOT reach the frontier —
-drop it and say so. The human's session is the scarcest thing this skill spends;
-asking them something already settled spends it twice. If every question is
-overtaken, say so and post no frontier.
+drop it and say so. Same for a question the map's Done-when no longer needs asked.
+The human's session is the scarcest thing this skill spends; asking them something
+already settled spends it twice. If EVERY question is dead — overtaken, settled, or
+not needed — post no frontier: post what you found instead (each question and what
+killed it, plus any fact worth keeping) and say so in your report. The LEAD then
+folds the durable parts into the map, closes the ticket, and flags the closure for
+ratification. You do not close it yourself.
 
 If this is a `prototype` ticket, BUILD FIRST: make the cheap, rough artifact the
 ticket asks for (outline, stub, UI/logic sketch — the /prototype skill), commit it
@@ -265,5 +275,7 @@ Stop the phase-1 loop when any of: no TAKEABLE research/task ticket remains; a r
 - `map-frontier.sh` also prints a **COVERAGE** line, and it governs whether the buckets can be trusted at all: `complete` (every label query read to exhaustion), `TRUNCATED` (hit the `PAGE_CAP` page cap, default 50 pages = 5000 tickets per label — re-run with `PAGE_CAP` higher), or `QUERY FAILED`. On either of the latter two the missing tickets are absent from **every** bucket, so a short read looks exactly like a small map. Don't sweep on a frontier that isn't `complete`.
 - **COMPLETE BUT OPEN** is the section to read first, every round. It lists open tickets that already carry a resolution comment — work that was done and never closed. These are free closes, and they do not surface any other way: the subagent claimed the ticket before starting, so a failed close leaves it in CLAIMED, which no round retakes. Same three outcomes as below, and `CHECK INCOMPLETE` is not `none`. A ticket holding a "Needs a human — checklist" is deliberately open and is never flagged.
 - `map-frontier.sh` catches the first case itself: its **UNLABELLED** section lists open issues pointing at this map that carry no `wayfinder:*` label. Read it every round and fix what it names (`glab issue update <iid> --label "wayfinder:<type>"`) before taking anything. It reports one of three things and they are not interchangeable — a list, `none, across <n> ... scanned`, or `SCAN FAILED`. **`SCAN FAILED` is not "none"**; it means the check didn't run and orphans are still possible. The scan covers open issues only, newest first, capped at `ORPHAN_MAX` (default 500) — raise it on a big project.
+- The script's other sections each demand something: **STALE CLAIM** (handed off but still assigned — `--unassign`); **CLAIMED, NO RESOLUTION** (claimed, nothing posted: a live run or a dead one — must name nothing this round claimed by round's end); **LOOSE POINTER** (labelled, mentions the map, `Part of:` doesn't parse — fix the body, the ticket is in no bucket); **BLOCKER LOOKUP FAILED** (blocker unreadable, treated as open — its dependents stay BLOCKED until verified by hand).
+- Push — **lead only, at handover**: `git push -u origin wayfinder/<branch>` for every branch the run created. Never `main`, never a merge into anything shared.
 - When a blocker closes, strike it through in the blocked ticket's `## Blocked by` list rather than deleting it, and say what changed.
 - Anything whose *failure* must be seen — builds, tests — is asserted on a positive signal (`BUILD SUCCESSFUL`, a parsed result file), never on the absence of errors, and is run with any output filter bypassed (`rtk proxy <cmd>`, if that's the filter).

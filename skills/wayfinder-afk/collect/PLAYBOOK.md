@@ -57,6 +57,8 @@ Follow `RUN.md`'s device order. Never reorder in a way that picks a radio up twi
 
 Bans carry over from run mode: no install, flash, factory-reset or **reboot** unless they say so in that turn. A reboot has already stranded a radio for a whole run.
 
+**Checklist tickets ride with the bench.** A "Needs a human" task whose report-back is in the inventory: read it against the ticket's **Report back:** list. Complete → post a closing comment carrying their outputs verbatim, close, read the state back. Incomplete → name exactly what's missing and either finish it live or leave the ticket open with the gap stated. No report-back yet → walk the checklist now (this session is the human hand it was waiting for) or record an explicit deferral. Their outputs are answers; they go onto the ticket, never just into the conversation.
+
 `VERDICT:` settles its question — apply it immediately and say so. `PRECONDITION:` means the probe never ran; it is not a negative answer, and a probe that never ran leaves its question open. If a verdict **contradicts a stage-2 answer**, stop: present both, say which the evidence supports, and let them re-answer.
 
 ## Parsing what they say
@@ -91,11 +93,16 @@ The human answered these in a guided session. Their answers, verbatim:
 1. Post ONE "Settled" comment (TEMPLATES.md) restating each question and their answer in
    the ticket's own words, carrying their reasoning. Add no reasoning of your own, and do
    not argue with an answer that went against the recommendation.
-2. Every question answered or deferred → close the ticket, then read the state back and
-   confirm it says `closed`. Report which it was. A ticket left resolved-but-open looks
-   finished to everyone except the map, and no later round retakes it.
-   Otherwise post a round <n+1>
-   frontier: what is unanswered, what their answers unlocked, what is newly askable.
+2. Every question ANSWERED → close the ticket, then read the state back and confirm it
+   says `closed`. Report which it was. A ticket left resolved-but-open looks finished
+   to everyone except the map, and no later round retakes it.
+   Any question DEFERRED or unread → the ticket stays OPEN: post a round <n+1> frontier
+   carrying each deferred question by name, plus what their answers unlocked and what
+   is newly askable. Deferred is not dropped — and a closed ticket has no next
+   frontier to carry it, which is why deferral and closing cannot share a ticket.
+   Before any close, list in your report what the map must keep — facts, ratified
+   calls, artifact links. Only the lead writes the map body, but a close that strands
+   the sole copy of a fact inside a closed ticket is a close done wrong.
 3. Post the applied marker naming what you consumed.
 4. Do NOT edit the map body. Do NOT invent an answer to anything left unread.
 
@@ -112,7 +119,8 @@ human has to come back for.
 
 ## Tracker crib (GitLab / `glab`)
 
-- Notes: `glab api "projects/:fullpath/issues/<iid>/notes?per_page=100&sort=asc&order_by=created_at"`. `glab` prints a multi-config warning **on stdout** — strip to the first `[`/`{`. `--output json`, never `-F json`.
+- Notes: `scripts/answers.sh <map>` pages them to exhaustion — prefer it to a hand query, which caps at 100 and, with `sort=asc`, silently drops the **newest** notes, i.e. the answers. Its honesty lines are load-bearing: **NOTES FETCH FAILED** means that ticket's answers are *unknown* (re-run; never treat as empty), **NOTES TRUNCATED** means the page cap bit (`NOTES_PAGE_CAP`, default 30 pages, raise and re-run). It also lists **report-backs** on open research/task tickets — the checklist replies.
+- Raw notes, when you must: `glab api "projects/:fullpath/issues/<iid>/notes?per_page=100&sort=asc&order_by=created_at"`. `glab` prints a multi-config warning **on stdout** — strip to the first `[`/`{`. `--output json`, never `-F json`.
 - `"system": true` notes are GitLab's own cross-reference chatter — always filtered.
 - Comment: `glab issue note <iid> --message "..."`. Close: comment first, then `glab issue close <iid>` — close takes no message. **Read the state back** (`glab issue view <iid> --output json | jq -r .state` → `closed`); the command's silence proves nothing.
 - `map-frontier.sh` prints **COMPLETE BUT OPEN** — open tickets already carrying a resolution comment, i.e. closes that never landed. Check it at the start of a session and finish those closes; they are the cheapest thing on the map.

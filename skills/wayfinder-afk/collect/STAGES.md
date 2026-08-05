@@ -28,11 +28,13 @@ Between 2 and 3 sits the **reconcile** step: the answers in stage 2 routinely in
 
 ## Stage 0 — Gather, quietly
 
-`bash scripts/answers.sh <map>` for each ticket's frontier and any comments already posted; the map body for standing constraints, `## Decisions so far` and `## Lead's review queue`; `bench/<map>/RUN.md` for the probe inventory. Answers already given in a browser count as given — the session only asks what is still open.
+`bash scripts/answers.sh <map>` for each ticket's frontier and any comments already posted — including the human's **report-backs on "Needs a human" checklist tickets**, which it lists alongside the frontiers; the map body for standing constraints, `## Done when`, `## Decisions so far` and `## Lead's review queue`; `bench/<map>/RUN.md` for the probe inventory. A **NOTES FETCH FAILED** line means that ticket's answers are *unknown*, not absent — re-run before treating it as empty. Answers already given in a browser count as given — the session only asks what is still open.
 
-Open with one short orientation: how many decisions in how many groups, how many open questions, how many probes, and roughly how long. Then go straight into stage 1. No other preamble.
+Open with one short orientation: how many decisions in how many groups, how many open questions, how many probes, how many checklist report-backs, and roughly how long. Then go straight into stage 1. No other preamble.
 
 ## Stage 1 — Ratify the run's calls
+
+**The arrival condition comes before everything.** If the map has no `## Done when`, the session's first card asks the human to state one — every "needed", "moot" and "close it" judgement downstream is made against it, and taking those judgements first means taking them against nothing. If a run posted an *inferred* one, ratifying or amending it is the first card instead, always alone, never grouped.
 
 These come first because they are the premises everything else stands on: a decline here changes which questions stage 2 even asks.
 
@@ -64,9 +66,13 @@ Two ways to get a result, and **ask which**: they run it and paste, or — read-
 
 A `VERDICT:` line settles its question immediately; say so and move on. A `PRECONDITION:` line is **not** an answer — it means the probe never ran. If a verdict contradicts an answer from stage 2, stop and say so plainly; the evidence outranks the armchair.
 
+**The bench includes the checklist tickets.** Every "Needs a human" task in the inventory gets its turn here: if a report-back is already posted, read it against the ticket's **Report back:** list, confirm nothing is missing, close the ticket and read the state back. If none is posted, walk them through the checklist now — this session *is* the human hand the ticket was waiting for — or record it as explicitly deferred. A checklist ticket leaving this stage is closed, mid-checklist with what's missing named, or deferred by their word; never silently carried.
+
 ## Stage 4 — Apply and report
 
-Most of it is already banked. Finish the map body, close what is fully answered, post round n+1 frontiers for what is not, wire new tickets, unblock dependents, graduate fog. Then report, and if anything is now TAKEABLE, offer `/wayfinder-afk <map>` rather than sweeping here.
+Most of it is already banked. Finish the map body, close what is fully answered, post round n+1 frontiers for what is not, wire new tickets, unblock dependents, graduate fog. **A close folds first**: whatever on the ticket the map will still need — facts, ratified calls, artifact links — goes into the map body before the state flips, so nothing durable lives only inside a closed ticket. A ticket with a **deferred** question does not close — deferral is an open state, and a closed ticket has no next frontier to carry it; it stays open with the round n+1 frontier naming what's deferred.
+
+**Then score the arrival.** Walk `## Done when` item by item: met, decided but unbuilt, undecided. If anything is decided-but-unbuilt and the Notes don't authorize building, ask now — the human is in the room: one picker, "the map is fully decided on <items> — authorize the build?" On yes, the lead amends Notes to say so and promotes or files the build tickets; the next run sweeps them. If **every** item is met, propose closing the map itself — same picker, their call. Report leads with the arrival score and the net, then everything else; if anything is now TAKEABLE, offer `/wayfinder-afk <map>` rather than sweeping here.
 
 ## Standing rules
 

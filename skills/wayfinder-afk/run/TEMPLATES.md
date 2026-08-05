@@ -94,6 +94,37 @@ Leave the ticket **open and unclaimed** unless nothing is left to do, in which c
 <!-- wayfinder:agent -->
 ```
 
+## Intake — not needed
+
+Posted when the destination stands without this ticket: finishing it would move no `## Done when` item and nothing on the map is blocked by it. Close, read the state back — and the lead flags the closure for ratification, because a wrong prune must be loud enough to reverse.
+
+```markdown
+## Not needed
+
+**Done when says:** <the arrival items this was assumed to serve, verbatim>
+
+**Why this doesn't serve them:** <the gap — and that nothing on the map is blocked by this ticket>
+
+Closing as not needed. Flagged for ratification — reopen if the map disagrees.
+
+<!-- wayfinder:agent -->
+```
+
+## Map — Done when
+
+The arrival condition — the section every run steers by and every handover scores. Observable conditions, not intentions: each item is something a stranger could check. Written by the human, or inferred by a run and flagged for ratification; a map without one suspends every "not needed" judgement until it exists.
+
+```markdown
+## Done when
+
+<!-- the arrival condition. A run scores this at every handover: met / decided but unbuilt / undecided -->
+
+- [ ] <observable condition — checkable by a stranger>
+- [ ] <observable condition>
+
+<if inferred: *Inferred by /wayfinder-afk <date> from the destination and Notes — ratify or amend; the run steers by this until you do.*>
+```
+
 ## Task ticket that turned out to need the human
 
 Post this, leave the ticket **open** and **unassigned**. A bare list of steps is the fallback — if the steps can be collapsed into one command, build the probe and lead with it.
@@ -263,6 +294,10 @@ A failed **precondition** prints `PRECONDITION:` and exits non-zero — that is 
 ## Unattended run — <what was swept>
 
 **Net <±n>** — closed <n>, filed <n>. <n> tickets open on this map, was <n>.
+**Arrival <k>/<m>** — `Done when`: <k> met · <n> decided but unbuilt · <n> undecided.
+<if anything is decided-but-unbuilt: `Build not authorized — "authorize the build" is at the top of the review queue, with the tickets ready as candidates.`>
+<if all met: `Every Done-when item is met — propose closing the map.`>
+<if the map has no Done when: `No arrival condition on the map — <inferred one posted for ratification | "define the arrival condition" is the top Blocked-on-you item>. Necessity checks were suspended.`>
 <per-round if it took more than one: `r1 −3 · r2 −1 · r3 +2 (closing-only imposed)`>
 
 **Closed (<n>)** — <ticket name> · <ticket name>
@@ -272,7 +307,7 @@ A failed **precondition** prints `PRECONDITION:` and exits non-zero — that is 
 **New tickets (<n>)** — <ticket name> (<type>, blocked by <…>) — <why the ticket test passed>
 **Questions folded into existing frontiers (<n>)** — onto <ticket name>: <n> · …
 **Held as candidates (<n>)** — not filed; on the map body under Candidate tickets
-**Branches (<n>, unpushed)** — `wayfinder/<map>-<iid>-<slug>` — <what's on it>
+**Branches (<n>, pushed)** — `wayfinder/<map>-<iid>-<slug>` — <what's on it>
 **Bench kit** — `bench/<map>/RUN.md` on `wayfinder/<map>-bench`: <n> probes settling <n> of the <n> open questions, ~<n> min at the bench. Start with `bash bench/<map>/run-all.sh`. <n> questions are judgement-only. <n> probes are compiled but never run.
 **Fog graduated / newly visible** — <one line>
 

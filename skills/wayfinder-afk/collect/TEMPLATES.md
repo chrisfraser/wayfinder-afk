@@ -16,8 +16,10 @@ Map #<map> — <destination in one clause>.
   <n> calls the run took, in <m> groups          → ratify first
   <n> open questions across <n> tickets           → <n> need judgement, <n> have a probe
   <n> probes at the bench, ~<n> min, <n> device(s)
+  <n> checklist ticket(s)                         → <n> report-back(s) waiting to be read
 
 Starting with the calls — they're the premises everything else rests on.
+<or, if the map has no `## Done when`: Starting with the arrival condition — the map doesn't say when it's done, and everything below is judged against that.>
 ```
 
 No summary of the run, no recap of the map. If they want it, they'll ask.
@@ -168,9 +170,11 @@ A `PRECONDITION:` line means the probe never ran — say so, say what's missing,
 ```
 ### Done — map #<map>
 
-Ratified <n>, declined <n>. Answered <n>, deferred <n>. Bench: <n> run, <n> skipped, <n> blocked.
+Net <±n> — closed <n>, filed <n>. Arrival: <k>/<m> `Done when` items met, <n> decided but unbuilt, <n> undecided.
+Ratified <n>, declined <n>. Answered <n>, deferred <n>. Bench: <n> run, <n> skipped, <n> blocked. Checklists: <n> closed, <n> still open.
 Closed: <ticket name> · <ticket name>
 Round <n+1> posted: <ticket name> (<n> questions)
+<Build authorized: <items> — tickets filed, `/wayfinder-afk <map>` sweeps them · or · All Done-when items met — map closed / closure declined: <their words>>
 Now takeable: <ticket name> · … → `/wayfinder-afk <map>`
 Still on you: <what, and why it couldn't be settled here>
 ```
@@ -249,9 +253,12 @@ Ratified calls **move** here; the review-queue entry is deleted, not left behind
 ```markdown
 ## Review session — round <n>
 
+**Net <±n>** — closed <n>, filed <n>. <n> tickets open on this map, was <n>.
+**Arrival <k>/<m>** — `Done when`: <k> met · <n> decided but unbuilt · <n> undecided. <Build authorized: <items> | All met — map closed | closure declined: <why>>
 **Ratified (<n>) / declined (<n>)** — <the declines, one line each>
 **Answered (<n>) · deferred (<n>) · unread (<n>)**
 **Bench** — <n> run, <n> moot, <n> blocked: <what and why>
+**Checklists** — <n> closed from report-backs, <n> walked live, <n> still open: <what's missing>
 **Closed (<n>)** — <ticket name> · <ticket name>
 **Round <n+1> posted (<n>)** — <ticket name>: <n> carried, <n> new
 **Reversed (<n>)** — <the declined call>: <what was undone>

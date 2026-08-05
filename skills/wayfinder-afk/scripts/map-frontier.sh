@@ -16,6 +16,11 @@
 # such a ticket is invisible to it — in no bucket, never swept, never blocking
 # anything. Catching them needs the separate unfiltered scan in step 1b.
 #
+# Further warning sections, each a distinct stranding mode: STALE CLAIM (handed
+# off but still assigned), CLAIMED NO RESOLUTION (claimed with nothing posted —
+# a live run or a dead one), LOOSE POINTER (labelled, mentions the map, pointer
+# doesn't parse), BLOCKER LOOKUP FAILED (blocker unreadable, treated as open).
+#
 # GitLab/glab specific. Requires: glab (authenticated in this repo), jq.
 # glab prints a multi-config warning on stdout, so every payload is stripped to
 # its first '[' or '{' before jq sees it.
@@ -116,15 +121,18 @@ if [ "$ORPHAN_OK" = "1" ]; then
     | sort_by(.iid)')"
 fi
 
-# 2. children of this map, with their declared blockers
+# 2. children of this map, with their declared blockers. Strict "Part of:" pointer
+#    ONLY — adopting any issue that merely mentions the map invents children, and
+#    an invented child gets swept, blocked on, and counted. Labelled issues that
+#    mention the map but fail the strict parse are reported as LOOSE POINTER below
+#    instead of being silently adopted or silently dropped.
 CHILDREN="$(printf '%s' "$ALL" | jq --arg map "$MAP" '
   # "m" is jq/Oniguruma dot-matches-newline; "s" is NOT — it retargets ^ and $.
   def blockers:
     ((.description // "") | (match("## Blocked by(.*?)(?:\n## |\\z)"; "m").captures[0].string // ""))
     | [ scan("#([0-9]+)") | .[0] | tonumber ];
   def parented: (.description // "") | test("Part of:[^\n]*(work_items/" + $map + "\\)|#" + $map + "\\))");
-  def mentioned: (.description // "") | test("work_items/" + $map + "\\)|#" + $map + "\\)");
-  (map(select(parented)) | if length > 0 then . else null end) // map(select(mentioned))
+  map(select(parented))
   | map({
       iid, state, title,
       url: .web_url,
@@ -135,13 +143,32 @@ CHILDREN="$(printf '%s' "$ALL" | jq --arg map "$MAP" '
     })
   | sort_by(.iid)')"
 
+# 2b. labelled issues that MENTION this map but whose "Part of:" line does not
+#     parse. Before this check they were silently adopted as children, which
+#     invented children on other maps; silently dropping them instead would make
+#     a malformed pointer indistinguishable from no pointer. Open ones only —
+#     a closed one is not waiting on anything.
+LOOSE="$(printf '%s' "$ALL" | jq --arg map "$MAP" '
+  def parented: (.description // "") | test("Part of:[^\n]*(work_items/" + $map + "\\)|#" + $map + "\\))");
+  def mentioned: (.description // "") | test("work_items/" + $map + "\\)|#" + $map + "\\)");
+  map(select(.state != "closed" and (parented | not) and mentioned))
+  | map({iid, title, url: .web_url}) | sort_by(.iid)')"
+
 # 3. resolve the state of any blocker that is not itself a child (a blocker can
-#    be an ordinary issue on another map, or unlabelled)
+#    be an ordinary issue on another map, or unlabelled). A FAILED lookup is not
+#    "opened": defaulting it silently left the blocked ticket BLOCKED forever —
+#    a deleted or confidential blocker read as a permanently open one. Still
+#    treated as open (the conservative reading), but said out loud.
 KNOWN="$(printf '%s' "$CHILDREN" | jq '[.[] | {key: (.iid|tostring), value: .state}] | from_entries')"
 MISSING="$(printf '%s' "$CHILDREN" | jq -r --argjson known "$KNOWN" \
   '[.[].blockers[]] | unique | map(select($known[tostring] == null)) | .[]')"
+BLOCKER_FAIL=""
 for ID in $MISSING; do
-  ST="$(glab issue view "$ID" --output json 2>/dev/null | strip | jq -r '.state // "opened"')"
+  ST="$(glab issue view "$ID" --output json 2>/dev/null | strip | jq -r '.state // empty' 2>/dev/null || true)"
+  if [ -z "$ST" ]; then
+    ST="unknown"
+    BLOCKER_FAIL="$BLOCKER_FAIL #$ID"
+  fi
   KNOWN="$(printf '%s' "$KNOWN" | jq --arg k "$ID" --arg v "$ST" '. + {($k): $v}')"
 done
 
@@ -172,26 +199,34 @@ OUT="$(printf '%s' "$CHILDREN" | jq --argjson known "$KNOWN" '
 CHECK_MAX="${CHECK_MAX:-60}"
 DONE_OPEN='[]'
 HANDED_OFF='[]'
+NO_TRACE='[]'
 CHECK_OK=1
 CHECK_SCANNED=0
 CHECK_TRUNC=0
-for ID in $(printf '%s' "$OUT" | jq -r '.[] | select(.state != "closed") | .iid'); do
+# Newest first: the tickets a just-finished run stranded are the highest iids,
+# and a CHECK_MAX truncation must cut the OLD end of the list, not the end where
+# the fresh wreckage is.
+for ID in $(printf '%s' "$OUT" | jq -r '[ .[] | select(.state != "closed") | .iid ] | sort | reverse | .[]'); do
   if [ "$CHECK_SCANNED" -ge "$CHECK_MAX" ]; then CHECK_TRUNC=1; break; fi
-  NOTES="$(glab api "projects/:fullpath/issues/$ID/notes?per_page=100" 2>/dev/null | strip || true)"
+  NOTES="$(glab api "projects/:fullpath/issues/$ID/notes?per_page=100&sort=asc&order_by=created_at" 2>/dev/null | strip || true)"
   # Oniguruma anchors ^ per line by default, so no flag is needed here.
-  # HUMAN wins over RESOLVED deliberately: a ticket flagged for a person must never
-  # be reported as an unclosed close, whatever else was posted to it.
+  # The LATEST classifiable note wins. "HUMAN always outranks RESOLVED" looked
+  # safer but had a blind spot: an early checklist followed by a later resolution
+  # (the human did their part, the agent resolved, the close failed) was never
+  # flagged. Recency is the honest signal — the notes are fetched oldest-first,
+  # so `last` is the most recent word on the ticket.
   V="$(printf '%s' "$NOTES" | jq -r '
         if type != "array" then "ERR" else
-          [ .[] | select(.system != true) | .body // "" ] as $b
-          | if   ([ $b[] | test("^#+ *(Needs a human|Changed since this was filed)") ] | any) then "HUMAN"
-            elif ([ $b[] | test("^#+ *Answer\\b") ] | any) then "RESOLVED"
-            else "NEITHER" end
+          [ .[] | select(.system != true) | .body // ""
+            | if   test("^#+ *(Needs a human|Changed since this was filed)") then "HUMAN"
+              elif test("^#+ *(Answer\\b|Already settled\\b|Settled —)")     then "RESOLVED"
+              else empty end ]
+          | last // "NEITHER"
         end' 2>/dev/null || true)"
   case "$V" in
     RESOLVED) DONE_OPEN="$(printf '%s' "$DONE_OPEN" | jq --argjson id "$ID" '. + [$id]')" ;;
     HUMAN)    HANDED_OFF="$(printf '%s' "$HANDED_OFF" | jq --argjson id "$ID" '. + [$id]')" ;;
-    NEITHER)  ;;
+    NEITHER)  NO_TRACE="$(printf '%s' "$NO_TRACE" | jq --argjson id "$ID" '. + [$id]')" ;;
     *) CHECK_OK=0 ;;   # empty or ERR: the fetch failed, not "nothing found"
   esac
   CHECK_SCANNED=$(( CHECK_SCANNED + 1 ))
@@ -202,6 +237,15 @@ done
 # never retaken, so it is offered to nobody. The agent that handed it off owed it
 # an un-assign.
 STALE_CLAIMS="$(printf '%s' "$OUT" | jq --argjson ids "$HANDED_OFF" \
+  '[ .[] | select(.state != "closed" and .claimed and (.iid as $i | $ids | index($i))) ]')"
+
+# Claimed, and the notes show NEITHER a resolution NOR a handoff: either a run is
+# on it right now, or the claimant died mid-work — a crashed subagent leaves
+# exactly this shape, and it strands the ticket forever because CLAIMED is never
+# retaken. The two are indistinguishable from here, so this is reported as a
+# question for the reader, not a verdict: at the END of a round it must be empty
+# of the run's own claims.
+CLAIMED_NO_RES="$(printf '%s' "$OUT" | jq --argjson ids "$NO_TRACE" \
   '[ .[] | select(.state != "closed" and .claimed and (.iid as $i | $ids | index($i))) ]')"
 
 completion_report() {
@@ -233,6 +277,15 @@ completion_report() {
       + "  glab issue update <iid> --unassign\n"
       + (map("  #\(.iid) [\(.type)] \(.title) — held by \(.assignee)") | join("\n"))'
   fi
+  if [ "$(printf '%s' "$CLAIMED_NO_RES" | jq 'length')" -gt 0 ]; then
+    printf '%s' "$CLAIMED_NO_RES" | jq -r '
+      "CLAIMED, NO RESOLUTION — \(length) claimed ticket(s) with no resolution or handoff posted\n"
+      + "  Either a run is on them right now, or the claimant died mid-work. A crashed\n"
+      + "  subagent leaves exactly this shape, and CLAIMED is never retaken. At the end\n"
+      + "  of a round this list must not name anything that round claimed — un-assign\n"
+      + "  what it does: glab issue update <iid> --unassign\n"
+      + (map("  #\(.iid) [\(.type)] \(.title) — held by \(.assignee)") | join("\n"))'
+  fi
 }
 
 # Coverage of step 1. A frontier built from a short read is WRONG, not merely
@@ -249,6 +302,11 @@ coverage_report() {
   fi
   if [ -z "$LABEL_FAIL" ] && [ -z "$LABEL_TRUNC" ]; then
     printf 'COVERAGE — complete: all four label queries read to exhaustion.\n'
+  fi
+  if [ -n "$BLOCKER_FAIL" ]; then
+    printf 'BLOCKER LOOKUP FAILED for:%s — treated as OPEN, so their dependents stay\n' "$BLOCKER_FAIL"
+    printf '           BLOCKED. A deleted or confidential blocker looks exactly like this;\n'
+    printf '           verify by hand or the dependents are blocked forever.\n'
   fi
 }
 
@@ -278,11 +336,24 @@ orphan_report() {
     + "\n  (\($scanned) open issue(s) scanned)"'
 }
 
+# Labelled, mentions the map, but the "Part of:" line does not parse. Not adopted
+# as a child (adoption invents children), not silently dropped (a malformed
+# pointer must not read as no pointer). Fix the body, don't relabel.
+loose_report() {
+  [ "$(printf '%s' "$LOOSE" | jq 'length')" -gt 0 ] || return 0
+  printf '%s' "$LOOSE" | jq -r '
+    "LOOSE POINTER — \(length) open labelled issue(s) mention this map but their\n"
+    + "  Part of: line does not parse, so they are in NO bucket above. The URL must\n"
+    + "  end in work_items/<map> or #<map> — fix the body, then re-run:\n"
+    + (map("  #\(.iid) \(.title)\n        \(.url)") | join("\n"))'
+}
+
 if [ "$JSON" = "1" ]; then
   printf '%s\n' "$OUT"
   coverage_report >&2
   completion_report >&2
   orphan_report >&2
+  loose_report >&2
   exit 0
 fi
 
@@ -304,3 +375,4 @@ printf '\n'
 coverage_report
 completion_report
 orphan_report
+loose_report
