@@ -59,7 +59,7 @@ Then `AskUserQuestion` — one group per turn, never more:
 - **question**: the shared premise, then **every call in the group, numbered, one clause each**, then `— approve all <n>?`. Example: `The SOS frontiers scoped their questions — (1) the latch ruling covers only what clears RAISED on the POC half, (2) option (b) is off Q1's menu, (3) …, (4) … — approve all 4?`
 - **options**: `Approve all <n> (Recommended)` · `Decline all <n>` · `Split — ask individually`
 
-**The picker stands alone.** On a phone it renders as a modal over the transcript: the card, the narration, everything "directly above" is behind it, unseen. Nothing the decision needs may live only in the transcript — the question carries the calls, the option descriptions carry the stakes. The card stays in the transcript for the full why and reversal costs; the picker is written as if the card doesn't exist. A group whose calls won't compress to a clause each is split before it is asked.
+**The picker stands alone — in every client.** The phone renders it as a modal over the transcript; the terminal shows it with the card scrolled away or never rendered at all (text emitted between tool calls is not reliably shown). Nothing the decision needs may live only in the transcript — the question carries the calls, the option descriptions carry the stakes, and both read cold: every coined name glossed in place (`the latch ruling — cancel() only clears RAISED on the POC half —` not `the latch ruling stays scoped`), no option letters or ticket ids standing in for content. The card still prints for the full why and reversal costs; the picker is written as if it doesn't exist. A group whose calls won't compress to a clause each is split before it is asked.
 
 Option descriptions speak the group's own subject matter — what approving makes standing, what declining re-opens — never session mechanics ("stage 2 will re-derive…" tells the human nothing about the calls).
 
@@ -91,7 +91,7 @@ Unblocks: #<iid>, #<iid>
 
 Then `AskUserQuestion` with the options as given, recommendation first. They can always answer in their own words instead — take the words over the letter.
 
-Stand-alone here too: the picker's question field carries the question **and** the one-clause why-it-matters; each option's description says what choosing it commits, in the ticket's subject matter. On a phone none of the card above survives into the picker — write the fields as the whole context.
+Stand-alone here too: the picker's question field carries the question **and** the one-clause why-it-matters; each option's description says what choosing it commits, in the ticket's subject matter, cold-readable — no client shows the card alongside the picker, so the fields are the whole context.
 
 **After every answer**, before the next question:
 
