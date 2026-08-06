@@ -116,8 +116,11 @@ Tracker: read docs/agents/issue-tracker.md for the exact CLI.
    Task tickets that need a human: post the checklist, leave OPEN, do not close — and
    **un-assign yourself**, or it stays in CLAIMED and neither a later round nor the
    human will see it as available.
-7. Files go on a branch: `git switch -c wayfinder/<map>-<iid>-<slug>`, commit there, name
-   the branch on the ticket. NEVER push, merge, or commit to main — a run that dies
+7. Files go on a branch: `git switch -c wayfinder/<map>-<iid>-<slug>` BEFORE the first
+   file, then COMMIT INCREMENTALLY — after each coherent unit of work, not once at the
+   end. An API failure can kill you between any two tool calls, and only commits
+   survive it; one end-of-ticket commit gambles everything on the last call. Name the
+   branch on the ticket. NEVER push, merge, or commit to main — a run that dies
    mid-way must strand nothing and touch nothing shared. Branch off the ORIGINAL HEAD,
    not whatever HEAD happens to be — in a shared worktree it may have moved under you.
    Leave the tree clean: commit everything you mean to keep, delete everything you
@@ -163,9 +166,11 @@ folds the durable parts into the map, closes the ticket, and flags the closure f
 ratification. You do not close it yourself.
 
 If this is a `prototype` ticket, BUILD FIRST: make the cheap, rough artifact the
-ticket asks for (outline, stub, UI/logic sketch — the /prototype skill), commit it
-to `wayfinder/<map>-<iid>-<slug>`, link it from the ticket, and pitch the frontier
-as "react to this". Rough is the point; do not polish, do not push, do not close.
+ticket asks for (outline, stub, UI/logic sketch — the /prototype skill) on
+`wayfinder/<map>-<iid>-<slug>` — branch before the first file, commit each piece as
+it lands (an API failure keeps only what's committed) — link it from the ticket,
+and pitch the frontier as "react to this". Rough is the point; do not polish, do
+not push, do not close.
 
 Investigate to the exact point where the human's judgement is genuinely needed —
 read the code, the AIDL, the docs, the adjacent tickets; establish every fact so
@@ -237,8 +242,10 @@ Build the smallest artifact that turns this question into a one-command verdict 
 human at the bench. Cost ladder and probe contract: PLAYBOOK.md — take the lowest rung
 that answers it, and justify going higher in the header.
 
-Everything lands in bench/<map>/ on branch wayfinder/<map>-bench-<slug>. Header format
-and the RUN.md entry you must supply: TEMPLATES.md.
+Everything lands in bench/<map>/ on branch wayfinder/<map>-bench-<slug> — branch
+before the first file, commit as you go: an API failure kills an agent mid-turn and
+keeps only what's committed. Header format and the RUN.md entry you must supply:
+TEMPLATES.md.
 
 Prove it builds or parses (assert on a positive signal, never on absence of errors, and
 bypass any output filter). Run it ONLY if you own a device and the probe is read-only.
