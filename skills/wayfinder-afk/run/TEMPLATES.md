@@ -227,7 +227,7 @@ One section on the map body, added by the run, cleared by the lead when they've 
 
 ### The landing MR
 
-!<id> — <n> ticket branch(es), <±lines>. Draft until you've reviewed the full diff; merging is yours. <Conflicts kept out: <ticket name> — still on its own branch.>
+!<id> — <n> ticket branch(es), <±lines>. Content verified: <n>/<n> markers PRESENT. Draft until you've reviewed the full diff; merging is yours. <Kept out: <ticket name> — <conflict | content did not arrive on merge> — still on its own branch.>
 ```
 
 ## Map — candidate tickets
@@ -311,7 +311,7 @@ A failed **precondition** prints `PRECONDITION:` and exits non-zero — that is 
 **New tickets (<n>)** — <ticket name> (<type>, blocked by <…>) — <why the ticket test passed>
 **Questions folded into existing frontiers (<n>)** — onto <ticket name>: <n> · …
 **Held as candidates (<n>)** — not filed; on the map body under Candidate tickets
-**Landing MR** — !<id>, draft — <n> ticket branch(es) folded in this run, <±lines>. Lands only after your review. <Left out: <ticket name> — conflict, in the review queue.>
+**Landing MR** — !<id>, draft — <n> ticket branch(es) folded in this run, <±lines>. Content verified: <n> markers PRESENT · <n> ABSENT · <n> PRECONDITION. Lands only after your review. <Left out: <ticket name> — <conflict | content did not arrive>, in the review queue.>
 **Branches (<n>, pushed, tree clean)** — `wayfinder/<map>-<iid>-<slug>` — <what's on it> — <in the landing MR | left out: conflict | throwaway>
 <if hardware was leased: **Hardware** — leases released: <serial> · <serial>>
 **Bench kit** — `bench/<map>/RUN.md` on `wayfinder/<map>-bench`: <n> probes settling <n> of the <n> open questions, ~<n> min at the bench. Start with `bash bench/<map>/run-all.sh`. <n> questions are judgement-only. <n> probes are compiled but never run.
